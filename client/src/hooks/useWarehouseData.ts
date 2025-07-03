@@ -60,12 +60,10 @@ export function useWarehouseData() {
 
   // Generate heatmap data when active type or time range changes
   useEffect(() => {
-    const generateData = async () => {
+    const generateData = () => {
       setIsLoading(true);
       
-      // Simulate async data loading
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      // Generate data synchronously to avoid race conditions
       const data = generateHeatmapData(activeHeatmapType, timeRange);
       setHeatmapData(data);
       setIsLoading(false);
@@ -73,18 +71,6 @@ export function useWarehouseData() {
 
     generateData();
   }, [activeHeatmapType, timeRange]);
-
-  // Initialize with default data
-  useEffect(() => {
-    const initializeData = async () => {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate loading
-      const initialData = generateHeatmapData('volume', 120);
-      setHeatmapData(initialData);
-      setIsLoading(false);
-    };
-
-    initializeData();
-  }, []);
 
   return {
     activeLayers,

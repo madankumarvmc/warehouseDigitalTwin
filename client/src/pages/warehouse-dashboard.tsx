@@ -1,15 +1,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Activity, MapPin, ZoomIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { WarehouseCanvas } from '@/components/warehouse/WarehouseCanvas';
+import WarehouseCanvas from '@/components/warehouse/WarehouseCanvas';
 import { CollapsibleSidebar } from '@/components/warehouse/CollapsibleSidebar';
 import { MinimapPanel } from '@/components/warehouse/MinimapPanel';
 import { useWarehouseData } from '@/hooks/useWarehouseData';
 import { useResourceTracking } from '@/hooks/useResourceTracking';
 import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
 
-export default function WarehouseDashboard() {
-  console.log("WarehouseDashboard rendering...");
+function WarehouseDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchHighlight, setSearchHighlight] = useState<string[]>([]);
   const [currentZoom, setCurrentZoom] = useState(100);
@@ -226,3 +225,5 @@ export default function WarehouseDashboard() {
     </div>
   );
 }
+
+export default React.memo(WarehouseDashboard);

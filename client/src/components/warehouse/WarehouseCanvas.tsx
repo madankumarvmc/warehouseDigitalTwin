@@ -16,7 +16,7 @@ interface WarehouseCanvasProps {
   searchHighlight: string[];
 }
 
-export function WarehouseCanvas({
+function WarehouseCanvas({
   heatmapData,
   forklifts,
   activeLayers,
@@ -359,3 +359,6 @@ export function WarehouseCanvas({
     </div>
   );
 }
+
+export { WarehouseCanvas };
+export default React.memo(WarehouseCanvas);

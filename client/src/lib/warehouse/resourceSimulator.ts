@@ -5,6 +5,8 @@ export class ResourceSimulator {
   private forklifts: ForkliftResource[] = [];
   private animationId: number | null = null;
   private listeners: ((forklifts: ForkliftResource[]) => void)[] = [];
+  private lastUpdateTime: number = 0;
+  private readonly UPDATE_INTERVAL = 1000; // Update every 1 second instead of 60 FPS
 
   constructor() {
     this.initializeForklifts();
@@ -46,8 +48,17 @@ export class ResourceSimulator {
     if (this.animationId) return;
     
     const animate = () => {
+      const now = Date.now();
+      
+      // Always update positions for smooth animation
       this.updatePositions();
-      this.notifyListeners();
+      
+      // Only notify listeners at the specified interval
+      if (now - this.lastUpdateTime >= this.UPDATE_INTERVAL) {
+        this.notifyListeners();
+        this.lastUpdateTime = now;
+      }
+      
       this.animationId = requestAnimationFrame(animate);
     };
     
