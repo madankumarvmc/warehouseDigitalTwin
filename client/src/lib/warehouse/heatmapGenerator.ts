@@ -61,12 +61,18 @@ export function generateHeatmapData(type: HeatmapType, timeRange: number = 120):
         break;
     }
 
-    if (value > 0) {
-      data.push({ cellId: cell.cellId, value: Math.min(1, value) });
+    const normalizedValue = Math.min(1, Math.max(0, value));
+    
+    // Only include cells with significant values (>= 0.1) for performance
+    if (normalizedValue >= 0.1) {
+      data.push({ cellId: cell.cellId, value: normalizedValue });
     }
   });
 
-  return data;
+  // Sort by value and limit to top 200 most significant cells for performance
+  return data
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 200);
 }
 
 export const heatmapColors = {

@@ -29,6 +29,7 @@ function WarehouseCanvas({
 }: WarehouseCanvasProps) {
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const zoomTimeoutRef = useRef<number | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [viewport, setViewport] = useState<ViewportState>({
     zoom: 1,
@@ -161,6 +162,8 @@ function WarehouseCanvas({
           width={cell.width}
           height={cell.height}
           fill={color}
+          perfectDrawEnabled={false}
+          listening={false}
         />
       );
     });
@@ -204,6 +207,7 @@ function WarehouseCanvas({
     const elements = [];
     const trailPoints = forklift.trail.flatMap(point => [point.x, point.y]);
 
+    // Simplified trail as single line path for better performance
     elements.push(
       <Line
         key={`trail-${selectedForklift}`}
@@ -214,23 +218,10 @@ function WarehouseCanvas({
         dash={[4, 4]}
         lineCap="round"
         lineJoin="round"
+        perfectDrawEnabled={false}
+        listening={false}
       />
     );
-
-    // Add load status indicators along trail
-    forklift.trail.forEach((point, index) => {
-      if (index % 5 === 0) { // Show every 5th point
-        elements.push(
-          <Circle
-            key={`trail-point-${selectedForklift}-${index}`}
-            x={point.x}
-            y={point.y}
-            radius={2}
-            fill={point.loaded ? 'hsl(122, 39%, 49%)' : 'hsl(4, 90%, 58%)'}
-          />
-        );
-      }
-    });
 
     return elements;
   }, [showTrails, selectedForklift, forklifts]);
@@ -291,7 +282,7 @@ function WarehouseCanvas({
     return elements;
   }, [activeLayers.resources, forklifts, selectedForklift, onForkliftSelect]);
 
-  // Handle wheel zoom
+  // Handle wheel zoom with optimized performance
   const handleWheel = useCallback((e: any) => {
     e.evt.preventDefault();
     
@@ -301,15 +292,12 @@ function WarehouseCanvas({
     const oldScale = stage.scaleX();
     const pointer = stage.getPointerPosition();
     
-    const scaleBy = 1.05;
+    // Faster zoom increments for better responsiveness
+    const scaleBy = 1.1;
     const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
     const clampedScale = Math.max(0.1, Math.min(3, newScale));
 
-    setViewport(prev => ({
-      ...prev,
-      zoom: clampedScale,
-    }));
-
+    // Immediate stage updates for responsive feel
     stage.scale({ x: clampedScale, y: clampedScale });
     
     const newPos = {
@@ -318,11 +306,17 @@ function WarehouseCanvas({
     };
     
     stage.position(newPos);
-    setViewport(prev => ({
-      ...prev,
-      panX: newPos.x,
-      panY: newPos.y,
-    }));
+    
+    // Throttled React state updates to avoid excessive re-renders
+    if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+    zoomTimeoutRef.current = window.setTimeout(() => {
+      setViewport(prev => ({
+        ...prev,
+        zoom: clampedScale,
+        panX: newPos.x,
+        panY: newPos.y,
+      }));
+    }, 50);
   }, []);
 
   // Handle drag
@@ -348,7 +342,10 @@ function WarehouseCanvas({
         x={viewport.panX}
         y={viewport.panY}
       >
-        <Layer>
+        <Layer 
+          perfectDrawEnabled={false}
+          listening={false}
+        >
           {renderWarehouseGrid()}
           {renderHeatmap()}
           {renderSearchHighlights()}

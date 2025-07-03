@@ -1,9 +1,9 @@
 import { WarehouseLayout, CellPosition } from './types';
 
 export const warehouseConfig = {
-  aisles: ['A1', 'A2', 'A3', 'A4'],
-  binsPerAisle: 60,
-  levels: 3,
+  aisles: ['A1', 'A2', 'A3', 'A4', 'A5'],
+  binsPerAisle: 20,
+  levels: 2,
   depth: 2,
   cellWidth: 40,
   cellHeight: 30,
@@ -14,7 +14,7 @@ export function generateWarehouseLayout(): WarehouseLayout {
   const cells: CellPosition[] = [];
   const { cellWidth, cellHeight, aisleWidth } = warehouseConfig;
 
-  for (let aisleIndex = 0; aisleIndex < 4; aisleIndex++) {
+  for (let aisleIndex = 0; aisleIndex < warehouseConfig.aisles.length; aisleIndex++) {
     const aisleName = warehouseConfig.aisles[aisleIndex];
     
     for (let bin = 1; bin <= warehouseConfig.binsPerAisle; bin++) {
