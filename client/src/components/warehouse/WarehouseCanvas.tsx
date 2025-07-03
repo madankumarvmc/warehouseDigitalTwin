@@ -122,7 +122,7 @@ function WarehouseCanvas({
             y={0}
             width={aisleWidth}
             height={aisleHeight}
-            fill="hsl(0, 0%, 10.2%)"
+            fill="hsl(0, 0%, 22%)"
             stroke="hsl(0, 0%, 20%)"
             strokeWidth={0.1}
             perfectDrawEnabled={false}

@@ -33,7 +33,7 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
           y={0}
           width={aisleWidth * scale}
           height={60 * cellHeight * scale}
-          fill="hsl(0, 0%, 10.2%)"
+          fill="hsl(0, 0%, 22%)"
         />
       );
 

@@ -26,7 +26,7 @@
   --radius: 0.5rem;
 
   /* Warehouse-specific colors */
-  --surface: hsl(0, 0%, 7.1%);
+  --surface: hsl(0, 0%, 18%);
   --surface-variant: hsl(0, 0%, 11.8%);
   --surface-elevated: hsl(0, 0%, 17.6%);
   --primary-variant: hsl(212, 78%, 46%);
@@ -163,8 +163,8 @@
   }
 
   .aisle-path {
-    fill: hsl(0, 0%, 10.2%);
-    stroke: hsl(0, 0%, 20%);
+    fill: hsl(0, 0%, 22%);
+    stroke: hsl(0, 0%, 30%);
     stroke-width: 0.5;
   }
 }
