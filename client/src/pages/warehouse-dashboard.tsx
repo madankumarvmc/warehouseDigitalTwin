@@ -3,7 +3,7 @@ import { Activity, MapPin, ZoomIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import WarehouseCanvas from '@/components/warehouse/WarehouseCanvas';
 import { CollapsibleSidebar } from '@/components/warehouse/CollapsibleSidebar';
-import { MinimapPanel } from '@/components/warehouse/MinimapPanel';
+
 import { useWarehouseData } from '@/hooks/useWarehouseData';
 import { useResourceTracking } from '@/hooks/useResourceTracking';
 import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
@@ -160,66 +160,57 @@ function WarehouseDashboard() {
           </div>
         </div>
 
-        {/* Canvas and Minimap Container */}
-        <div className="flex-1 flex">
-          {/* Main Canvas Area */}
-          <div className="flex-1 relative">
-            <WarehouseCanvas
-              heatmapData={heatmapData}
-              forklifts={forklifts}
-              activeLayers={activeLayers}
-              activeHeatmapType={activeHeatmapType}
-              layerOpacity={layerOpacity}
-              onForkliftSelect={selectForklift}
-              selectedForklift={selectedForklift}
-              showTrails={showTrails}
-              searchHighlight={searchHighlight}
-            />
+        {/* Main Canvas Area */}
+        <div className="flex-1 relative">
+          <WarehouseCanvas
+            heatmapData={heatmapData}
+            forklifts={forklifts}
+            activeLayers={activeLayers}
+            activeHeatmapType={activeHeatmapType}
+            layerOpacity={layerOpacity}
+            onForkliftSelect={selectForklift}
+            selectedForklift={selectedForklift}
+            showTrails={showTrails}
+            searchHighlight={searchHighlight}
+          />
 
-            {/* Canvas Controls Overlay */}
-            <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
-              <Button
-                className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
-                title="Zoom In"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button
-                className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
-                title="Zoom Out"
-              >
-                <ZoomIn className="h-4 w-4 rotate-180" />
-              </Button>
-              <Button
-                className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
-                title="Reset View"
-              >
-                <Activity className="h-4 w-4" />
-              </Button>
-            </div>
+          {/* Canvas Controls Overlay */}
+          <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
+            <Button
+              className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
+              title="Zoom In"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
+              title="Zoom Out"
+            >
+              <ZoomIn className="h-4 w-4 rotate-180" />
+            </Button>
+            <Button
+              className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
+              title="Reset View"
+            >
+              <Activity className="h-4 w-4" />
+            </Button>
+          </div>
 
-            {/* Status Indicators */}
-            <div className="absolute top-4 left-4 space-y-2">
-              <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-[hsl(207,90%,54%)]" />
-                  <span>X: <span className="text-[hsl(122,39%,49%)]">{currentPosition.x}</span>, Y: <span className="text-[hsl(122,39%,49%)]">{currentPosition.y}</span></span>
-                </div>
+          {/* Status Indicators */}
+          <div className="absolute top-4 left-4 space-y-2">
+            <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-4 w-4 text-[hsl(207,90%,54%)]" />
+                <span>X: <span className="text-[hsl(122,39%,49%)]">{currentPosition.x}</span>, Y: <span className="text-[hsl(122,39%,49%)]">{currentPosition.y}</span></span>
               </div>
-              <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <ZoomIn className="h-4 w-4 text-[hsl(207,90%,54%)]" />
-                  <span>Zoom: <span className="text-[hsl(122,39%,49%)]">{currentZoom}%</span></span>
-                </div>
+            </div>
+            <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
+              <div className="flex items-center space-x-2">
+                <ZoomIn className="h-4 w-4 text-[hsl(207,90%,54%)]" />
+                <span>Zoom: <span className="text-[hsl(122,39%,49%)]">{currentZoom}%</span></span>
               </div>
             </div>
           </div>
-
-          {/* Minimap Panel */}
-          <MinimapPanel
-            forklifts={forklifts}
-            activeHeatmap={activeHeatmapType}
-          />
         </div>
       </div>
     </div>
