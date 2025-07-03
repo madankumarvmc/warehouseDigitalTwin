@@ -113,63 +113,20 @@ function WarehouseDashboard() {
       <div className="flex-1 flex overflow-hidden">
         {/* Collapsible Sidebar */}
         <CollapsibleSidebar
-        isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        activeLayers={activeLayers}
-        layerOpacity={layerOpacity}
-        timeRange={timeRange}
-        onLayerToggle={toggleLayer}
-        onOpacityChange={updateLayerOpacity}
-        onTimeRangeChange={updateTimeRange}
-        onSKUSearch={handleSKUSearch}
-        onExport={handleExport}
-      />
+          isCollapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          activeLayers={activeLayers}
+          layerOpacity={layerOpacity}
+          timeRange={timeRange}
+          onLayerToggle={toggleLayer}
+          onOpacityChange={updateLayerOpacity}
+          onTimeRangeChange={updateTimeRange}
+          onSKUSearch={handleSKUSearch}
+          onExport={handleExport}
+        />
 
-      {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-80'}`}>
-        {/* Top Navigation Bar */}
-        <div className="bg-[hsl(0,0%,11.8%)] border-b border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-medium text-[hsl(207,90%,54%)]">
-                Warehouse Floor A - Section 1
-              </h1>
-              <div className="flex items-center space-x-2 text-sm text-[hsl(0,0%,70.2%)]">
-                <div className="w-2 h-2 bg-[hsl(122,39%,49%)] rounded-full pulse-animation"></div>
-                <span>Live Data</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              {/* Performance Metrics */}
-              <div className="text-xs text-[hsl(0,0%,70.2%)]">
-                <span>FPS: <span className="text-[hsl(122,39%,49%)]">60</span></span>
-                <span className="ml-4">Objects: <span className="text-[hsl(207,90%,54%)]">1,440</span></span>
-              </div>
-              
-              {/* Zoom Controls */}
-              <div className="flex items-center space-x-2 bg-[hsl(0,0%,17.6%)] rounded px-3 py-1">
-                {[25, 50, 100, 200].map(zoom => (
-                  <Button
-                    key={zoom}
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleZoomPreset(zoom)}
-                    className={`text-xs px-2 py-1 ${
-                      currentZoom === zoom
-                        ? 'text-[hsl(207,90%,54%)] font-medium'
-                        : 'text-[hsl(0,0%,70.2%)] hover:text-[hsl(207,90%,54%)]'
-                    }`}
-                  >
-                    {zoom}%
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Canvas and Minimap Container */}
-        <div className="flex-1 flex">
+        {/* Main Content Area */}
+        <div className={`flex-1 flex transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-80'}`}>
           {/* Main Canvas Area */}
           <div className="flex-1 relative">
             <WarehouseCanvas
@@ -185,6 +142,22 @@ function WarehouseDashboard() {
               searchHighlight={searchHighlight}
               timeRange={timeRange}
             />
+
+            {/* Status Indicators */}
+            <div className="absolute top-4 left-4 space-y-2">
+              <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
+                <div className="flex items-center space-x-2">
+                  <MapPin className="h-4 w-4 text-[hsl(207,90%,54%)]" />
+                  <span>X: <span className="text-[hsl(122,39%,49%)]">{currentPosition.x}</span>, Y: <span className="text-[hsl(122,39%,49%)]">{currentPosition.y}</span></span>
+                </div>
+              </div>
+              <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
+                <div className="flex items-center space-x-2">
+                  <ZoomIn className="h-4 w-4 text-[hsl(207,90%,54%)]" />
+                  <span>Zoom: <span className="text-[hsl(122,39%,49%)]">{currentZoom}%</span></span>
+                </div>
+              </div>
+            </div>
 
             {/* Canvas Controls Overlay */}
             <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
@@ -236,8 +209,7 @@ function WarehouseDashboard() {
             />
           )}
         </div>
-      </div>
-      
+
         {/* Collapsed Right Sidebar Toggle - floating */}
         {rightSidebarCollapsed && (
           <MinimapPanel
