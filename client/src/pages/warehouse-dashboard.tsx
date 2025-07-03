@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import WarehouseCanvas from '@/components/warehouse/WarehouseCanvas';
 import { CollapsibleSidebar } from '@/components/warehouse/CollapsibleSidebar';
 import { MinimapPanel } from '@/components/warehouse/MinimapPanel';
+import { Header } from '@/components/warehouse/Header';
 import { useWarehouseData } from '@/hooks/useWarehouseData';
 import { useResourceTracking } from '@/hooks/useResourceTracking';
 import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
@@ -104,9 +105,14 @@ function WarehouseDashboard() {
   }
 
   return (
-    <div className="h-screen bg-[hsl(0,0%,15%)] text-[hsl(0,0%,88.2%)] flex overflow-hidden relative">
-      {/* Collapsible Sidebar */}
-      <CollapsibleSidebar
+    <div className="h-screen bg-[hsl(0,0%,15%)] text-[hsl(0,0%,88.2%)] flex flex-col overflow-hidden relative">
+      {/* Header */}
+      <Header />
+      
+      {/* Main App Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Collapsible Sidebar */}
+        <CollapsibleSidebar
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         activeLayers={activeLayers}
@@ -232,16 +238,17 @@ function WarehouseDashboard() {
         </div>
       </div>
       
-      {/* Collapsed Right Sidebar Toggle - floating */}
-      {rightSidebarCollapsed && (
-        <MinimapPanel
-          forklifts={forklifts}
-          activeHeatmap={activeHeatmapType}
-          sidebarCollapsed={sidebarCollapsed}
-          isCollapsed={true}
-          onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
-        />
-      )}
+        {/* Collapsed Right Sidebar Toggle - floating */}
+        {rightSidebarCollapsed && (
+          <MinimapPanel
+            forklifts={forklifts}
+            activeHeatmap={activeHeatmapType}
+            sidebarCollapsed={sidebarCollapsed}
+            isCollapsed={true}
+            onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+          />
+        )}
+      </div>
     </div>
   );
 }
