@@ -131,36 +131,7 @@ function WarehouseCanvas({
         );
       }
 
-      // Racks on both sides
-      for (let side = 0; side < 2; side++) {
-        const rackX = aisleX + side * (cellWidth + aisleWidth);
-        
-        for (let bin = 0; bin < warehouseLayout.binsPerAisle; bin++) {
-          for (let level = 0; level < warehouseLayout.levels; level++) {
-            const x = rackX;
-            const y = bin * cellHeight + level * cellHeight * warehouseLayout.binsPerAisle;
-            
-            // Only render rack cell if in viewport
-            if (isInViewport(x, y, cellWidth, cellHeight)) {
-              elements.push(
-                <Rect
-                  key={`rack-${aisle}-${side}-${bin}-${level}`}
-                  x={x}
-                  y={y}
-                  width={cellWidth}
-                  height={cellHeight}
-                  fill="hsl(0, 0%, 17.6%)"
-                  stroke="hsl(0, 0%, 33.3%)"
-                  strokeWidth={0.1}
-                  opacity={0.8}
-                  perfectDrawEnabled={false}
-                  listening={false}
-                />
-              );
-            }
-          }
-        }
-      }
+
     }
 
     return elements;

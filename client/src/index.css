@@ -156,11 +156,7 @@
     opacity: 0.8;
   }
 
-  .rack-structure {
-    fill: var(--surface-elevated);
-    stroke: hsl(0, 0%, 33.3%);
-    stroke-width: 1;
-  }
+
 
   .aisle-path {
     fill: hsl(0, 0%, 22%);
