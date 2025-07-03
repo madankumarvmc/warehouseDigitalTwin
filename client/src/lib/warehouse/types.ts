@@ -15,7 +15,7 @@ export interface HeatmapData {
   value: number;
 }
 
-export interface ForkliftResource {
+export interface ResourceBase {
   id: string;
   x: number;
   y: number;
@@ -27,6 +27,14 @@ export interface ForkliftResource {
   targetY?: number;
   direction?: 'up' | 'down' | 'left' | 'right';
   currentAisle?: number;
+}
+
+export interface ForkliftResource extends ResourceBase {
+  type: 'forklift';
+}
+
+export interface BOPTResource extends ResourceBase {
+  type: 'bopt';
 }
 
 export type HeatmapType = 'volume' | 'frequency' | 'occupancy' | 'misplacement' | 'expiry' | 'exceptions';

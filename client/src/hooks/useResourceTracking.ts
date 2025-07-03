@@ -1,46 +1,49 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ForkliftResource } from '@/lib/warehouse/types';
+import { ForkliftResource, BOPTResource } from '@/lib/warehouse/types';
 import { resourceSimulator } from '@/lib/warehouse/resourceSimulator';
 
 export function useResourceTracking() {
   const [forklifts, setForklifts] = useState<ForkliftResource[]>([]);
-  const [selectedForklift, setSelectedForklift] = useState<string | null>(null);
+  const [bopts, setBOPTs] = useState<BOPTResource[]>([]);
+  const [selectedResource, setSelectedResource] = useState<string | null>(null);
   const [showTrails, setShowTrails] = useState(false);
 
   useEffect(() => {
-    const handleForkliftUpdate = (updatedForklifts: ForkliftResource[]) => {
-      setForklifts(updatedForklifts);
+    const handleResourceUpdate = (resources: { forklifts: ForkliftResource[], bopts: BOPTResource[] }) => {
+      setForklifts(resources.forklifts);
+      setBOPTs(resources.bopts);
     };
 
-    resourceSimulator.addListener(handleForkliftUpdate);
+    resourceSimulator.addListener(handleResourceUpdate);
     resourceSimulator.start();
 
     return () => {
-      resourceSimulator.removeListener(handleForkliftUpdate);
+      resourceSimulator.removeListener(handleResourceUpdate);
       resourceSimulator.stop();
     };
   }, []);
 
-  const selectForklift = useCallback((forkliftId: string | null) => {
-    setSelectedForklift(forkliftId);
-    setShowTrails(forkliftId !== null);
+  const selectResource = useCallback((resourceId: string | null) => {
+    setSelectedResource(resourceId);
+    setShowTrails(resourceId !== null);
   }, []);
 
   const toggleTrails = useCallback(() => {
     setShowTrails(prev => !prev);
   }, []);
 
-  const getSelectedForkliftData = useCallback(() => {
-    if (!selectedForklift) return null;
-    return resourceSimulator.getForkliftById(selectedForklift);
-  }, [selectedForklift]);
+  const getSelectedResourceData = useCallback(() => {
+    if (!selectedResource) return null;
+    return resourceSimulator.getResourceById(selectedResource);
+  }, [selectedResource]);
 
   return {
     forklifts,
-    selectedForklift,
+    bopts,
+    selectedResource,
     showTrails,
-    selectForklift,
+    selectResource,
     toggleTrails,
-    getSelectedForkliftData,
+    getSelectedResourceData,
   };
 }

@@ -1,17 +1,18 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Stage, Layer, Rect, Circle, Line, Text } from 'react-konva';
 import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
-import { HeatmapData, ForkliftResource, ViewportState } from '@/lib/warehouse/types';
+import { HeatmapData, ForkliftResource, BOPTResource, ViewportState } from '@/lib/warehouse/types';
 import { heatmapColors } from '@/lib/warehouse/heatmapGenerator';
 
 interface WarehouseCanvasProps {
   heatmapData: HeatmapData[];
   forklifts: ForkliftResource[];
+  bopts: BOPTResource[];
   activeLayers: Record<string, boolean>;
   activeHeatmapType: string;
   layerOpacity: Record<string, number>;
-  onForkliftSelect: (id: string) => void;
-  selectedForklift: string | null;
+  onResourceSelect: (id: string) => void;
+  selectedResource: string | null;
   showTrails: boolean;
   searchHighlight: string[];
 }
@@ -19,11 +20,12 @@ interface WarehouseCanvasProps {
 function WarehouseCanvas({
   heatmapData,
   forklifts,
+  bopts,
   activeLayers,
   activeHeatmapType,
   layerOpacity,
-  onForkliftSelect,
-  selectedForklift,
+  onResourceSelect,
+  selectedResource,
   showTrails,
   searchHighlight,
 }: WarehouseCanvasProps) {
@@ -177,20 +179,22 @@ function WarehouseCanvas({
     return elements;
   }, [searchHighlight]);
 
-  // Render forklift trails
-  const renderForkliftTrails = useCallback(() => {
-    if (!showTrails || !selectedForklift) return [];
+  // Render resource trails
+  const renderResourceTrails = useCallback(() => {
+    if (!showTrails || !selectedResource) return [];
 
-    const forklift = forklifts.find(f => f.id === selectedForklift);
-    if (!forklift || forklift.trail.length < 2) return [];
+    // Find the selected resource in either forklifts or BOPTs
+    const allResources = [...forklifts, ...bopts];
+    const resource = allResources.find(r => r.id === selectedResource);
+    if (!resource || resource.trail.length < 2) return [];
 
     const elements = [];
-    const trailPoints = forklift.trail.flatMap(point => [point.x, point.y]);
+    const trailPoints = resource.trail.flatMap(point => [point.x, point.y]);
 
     // Simplified trail as single line path for better performance
     elements.push(
       <Line
-        key={`trail-${selectedForklift}`}
+        key={`trail-${selectedResource}`}
         points={trailPoints}
         stroke="hsl(207, 90%, 54%)"
         strokeWidth={2}
@@ -204,7 +208,7 @@ function WarehouseCanvas({
     );
 
     return elements;
-  }, [showTrails, selectedForklift, forklifts]);
+  }, [showTrails, selectedResource, forklifts, bopts]);
 
   // Render forklifts
   const renderForklifts = useCallback(() => {
@@ -212,9 +216,9 @@ function WarehouseCanvas({
 
     const elements = [];
     forklifts.forEach(forklift => {
-      const isSelected = selectedForklift === forklift.id;
+      const isSelected = selectedResource === forklift.id;
       
-      // Forklift body
+      // Forklift body (circular)
       elements.push(
         <Circle
           key={`forklift-${forklift.id}`}
@@ -224,8 +228,8 @@ function WarehouseCanvas({
           fill={forklift.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(122, 39%, 49%)'}
           stroke={isSelected ? 'hsl(207, 90%, 54%)' : 'transparent'}
           strokeWidth={2}
-          onClick={() => onForkliftSelect(forklift.id)}
-          onTap={() => onForkliftSelect(forklift.id)}
+          onClick={() => onResourceSelect(forklift.id)}
+          onTap={() => onResourceSelect(forklift.id)}
         />
       );
 
@@ -260,7 +264,65 @@ function WarehouseCanvas({
     });
 
     return elements;
-  }, [activeLayers.resources, forklifts, selectedForklift, onForkliftSelect]);
+  }, [activeLayers.resources, forklifts, selectedResource, onResourceSelect]);
+
+  // Render BOPTs
+  const renderBOPTs = useCallback(() => {
+    if (!activeLayers.resources) return [];
+
+    const elements = [];
+    bopts.forEach(bopt => {
+      const isSelected = selectedResource === bopt.id;
+      
+      // BOPT body (rectangular to distinguish from forklifts)
+      elements.push(
+        <Rect
+          key={`bopt-${bopt.id}`}
+          x={bopt.x - (isSelected ? 8 : 6)}
+          y={bopt.y - (isSelected ? 6 : 4)}
+          width={isSelected ? 16 : 12}
+          height={isSelected ? 12 : 8}
+          fill={bopt.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(265, 89%, 78%)'}
+          stroke={isSelected ? 'hsl(207, 90%, 54%)' : 'transparent'}
+          strokeWidth={2}
+          cornerRadius={2}
+          onClick={() => onResourceSelect(bopt.id)}
+          onTap={() => onResourceSelect(bopt.id)}
+        />
+      );
+
+      // Load indicator for BOPTs
+      if (bopt.loaded) {
+        elements.push(
+          <Rect
+            key={`bopt-load-${bopt.id}`}
+            x={bopt.x - 3}
+            y={bopt.y - 10}
+            width={6}
+            height={3}
+            fill="hsl(4, 90%, 58%)"
+          />
+        );
+      }
+
+      // BOPT ID
+      elements.push(
+        <Text
+          key={`bopt-id-${bopt.id}`}
+          x={bopt.x}
+          y={bopt.y + 15}
+          text={bopt.id}
+          fontSize={9}
+          fontFamily="Roboto"
+          fill="hsl(0, 0%, 88.2%)"
+          align="center"
+          offsetX={20}
+        />
+      );
+    });
+
+    return elements;
+  }, [activeLayers.resources, bopts, selectedResource, onResourceSelect]);
 
   // Optimized zoom with immediate response and minimal re-renders
   const handleWheel = useCallback((e: any) => {
@@ -322,8 +384,9 @@ function WarehouseCanvas({
           {renderWarehouseGrid()}
           {renderHeatmap()}
           {renderSearchHighlights()}
-          {renderForkliftTrails()}
+          {renderResourceTrails()}
           {renderForklifts()}
+          {renderBOPTs()}
         </Layer>
       </Stage>
     </div>

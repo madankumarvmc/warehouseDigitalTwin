@@ -29,9 +29,10 @@ function WarehouseDashboard() {
 
   const {
     forklifts,
-    selectedForklift,
+    bopts,
+    selectedResource,
     showTrails,
-    selectForklift,
+    selectResource,
   } = useResourceTracking();
 
   const handleSKUSearch = useCallback((sku: string) => {
@@ -168,11 +169,12 @@ function WarehouseDashboard() {
             <WarehouseCanvas
               heatmapData={heatmapData}
               forklifts={forklifts}
+              bopts={bopts}
               activeLayers={activeLayers}
               activeHeatmapType={activeHeatmapType}
               layerOpacity={layerOpacity}
-              onForkliftSelect={selectForklift}
-              selectedForklift={selectedForklift}
+              onResourceSelect={selectResource}
+              selectedResource={selectedResource}
               showTrails={showTrails}
               searchHighlight={searchHighlight}
             />
