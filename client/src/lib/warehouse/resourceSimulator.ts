@@ -17,29 +17,41 @@ export class ResourceSimulator {
       {
         id: 'FL-001',
         x: 100,
-        y: 150,
+        y: 50,
         loaded: true,
         trail: [],
         speed: 2.3,
         status: 'active',
+        targetX: 100,
+        targetY: 400,
+        direction: 'down',
+        currentAisle: 0,
       },
       {
         id: 'FL-002',
         x: 300,
-        y: 250,
+        y: 350,
         loaded: false,
         trail: [],
         speed: 1.8,
         status: 'active',
+        targetX: 300,
+        targetY: 50,
+        direction: 'up',
+        currentAisle: 1,
       },
       {
         id: 'FL-003',
         x: 500,
-        y: 180,
+        y: 100,
         loaded: true,
         trail: [],
         speed: 2.1,
         status: 'active',
+        targetX: 500,
+        targetY: 380,
+        direction: 'down',
+        currentAisle: 2,
       },
     ];
   }
@@ -88,28 +100,61 @@ export class ResourceSimulator {
       const fiveMinutesAgo = now - 5 * 60 * 1000;
       forklift.trail = forklift.trail.filter(point => point.timestamp > fiveMinutesAgo);
 
-      // Simulate realistic movement patterns
-      const movementSpeed = forklift.speed * 0.5; // Scale for animation
+      // Realistic aisle-based movement patterns
+      const movementSpeed = forklift.speed * 0.8; // Increased speed for visible movement
       
-      // Random movement with some bias towards aisles
-      const deltaX = (Math.random() - 0.5) * movementSpeed * 2;
-      const deltaY = (Math.random() - 0.5) * movementSpeed * 2;
+      // Calculate aisle center X position
+      const aisleWidth = warehouseConfig.aisleWidth;
+      const cellWidth = warehouseConfig.cellWidth;
+      const aisleX = (forklift.currentAisle || 0) * (cellWidth * 2 + aisleWidth) + cellWidth + aisleWidth / 2;
       
-      forklift.x += deltaX;
-      forklift.y += deltaY;
+      // Keep forklift in aisle center (slight variation for realism)
+      forklift.x = aisleX + (Math.random() - 0.5) * 20;
+      
+      // Move towards target Y position
+      const targetY = forklift.targetY || forklift.y;
+      const deltaY = targetY - forklift.y;
+      const direction = deltaY > 0 ? 1 : -1;
+      
+      // Move at consistent speed towards target
+      if (Math.abs(deltaY) > movementSpeed) {
+        forklift.y += direction * movementSpeed;
+      } else {
+        forklift.y = targetY;
+        // Reached target, set new target at opposite end
+        this.setNewTarget(forklift);
+      }
 
       // Keep within warehouse bounds
-      const maxX = warehouseConfig.aisles.length * (warehouseConfig.cellWidth * 2 + warehouseConfig.aisleWidth);
       const maxY = warehouseConfig.binsPerAisle * warehouseConfig.cellHeight;
-      
-      forklift.x = Math.max(50, Math.min(maxX - 50, forklift.x));
-      forklift.y = Math.max(50, Math.min(maxY - 50, forklift.y));
+      forklift.y = Math.max(30, Math.min(maxY - 30, forklift.y));
 
-      // Randomly change load status occasionally
-      if (Math.random() < 0.002) { // 0.2% chance per frame
-        forklift.loaded = !forklift.loaded;
+      // Change load status at end of aisles (more realistic)
+      if (Math.abs(forklift.y - (forklift.targetY || 0)) < 10) {
+        if (Math.random() < 0.4) { // 40% chance to change load status at aisle ends
+          forklift.loaded = !forklift.loaded;
+        }
       }
     });
+  }
+
+  private setNewTarget(forklift: ForkliftResource) {
+    const maxY = warehouseConfig.binsPerAisle * warehouseConfig.cellHeight;
+    
+    // Occasionally switch aisles for more dynamic movement
+    if (Math.random() < 0.3) {
+      const newAisle = Math.floor(Math.random() * warehouseConfig.aisles.length);
+      forklift.currentAisle = newAisle;
+    }
+    
+    // Set target to opposite end of current aisle
+    if (forklift.y < maxY / 2) {
+      forklift.targetY = maxY - 50; // Go to bottom
+      forklift.direction = 'down';
+    } else {
+      forklift.targetY = 50; // Go to top
+      forklift.direction = 'up';
+    }
   }
 
   addListener(callback: (forklifts: ForkliftResource[]) => void) {

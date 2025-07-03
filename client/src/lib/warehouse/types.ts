@@ -23,6 +23,10 @@ export interface ForkliftResource {
   trail: { x: number; y: number; loaded: boolean; timestamp: number }[];
   speed: number;
   status: 'active' | 'idle' | 'maintenance';
+  targetX?: number;
+  targetY?: number;
+  direction?: 'up' | 'down' | 'left' | 'right';
+  currentAisle?: number;
 }
 
 export type HeatmapType = 'volume' | 'frequency' | 'occupancy' | 'misplacement' | 'expiry' | 'exceptions';
