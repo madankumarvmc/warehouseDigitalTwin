@@ -126,6 +126,13 @@ Changelog:
   * Throttled resource updates to 3-second intervals
   * Enhanced zoom performance with faster increments and throttled React updates
   * Added perfectDrawEnabled={false} to canvas elements for better performance
+- July 03, 2025. Enhanced resource tracking with realistic movement trails:
+  * Created movementTrails.ts for authentic warehouse movement simulation
+  * Forklifts move primarily within assigned aisles (80% time), occasionally visit zones
+  * BOPTs move horizontally across warehouse with frequent load changes
+  * Color-coded trails: orange for loaded movement, white for unloaded
+  * Background dims when resource selected for focused tracking
+  * Trail data based on time range selection (15 min - 24 hours)
 ```
 
 ## User Preferences

@@ -4,6 +4,7 @@ import Konva from 'konva';
 import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
 import { HeatmapData, ForkliftResource, BOPTResource, ViewportState } from '@/lib/warehouse/types';
 import { heatmapColors } from '@/lib/warehouse/heatmapGenerator';
+import { getResourceTrail } from '@/lib/warehouse/movementTrails';
 
 interface WarehouseCanvasProps {
   heatmapData: HeatmapData[];
@@ -16,6 +17,7 @@ interface WarehouseCanvasProps {
   selectedResource: string | null;
   showTrails: boolean;
   searchHighlight: string[];
+  timeRange: number;
 }
 
 function WarehouseCanvas({
@@ -29,6 +31,7 @@ function WarehouseCanvas({
   selectedResource,
   showTrails,
   searchHighlight,
+  timeRange,
 }: WarehouseCanvasProps) {
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -180,28 +183,27 @@ function WarehouseCanvas({
     return elements;
   }, [searchHighlight]);
 
-  // Render resource trails with color coding
+  // Render resource trails with color coding using realistic movement data
   const renderResourceTrails = useCallback(() => {
     if (!selectedResource) return [];
 
-    // Find the selected resource in either forklifts or BOPTs
-    const allResources = [...forklifts, ...bopts];
-    const resource = allResources.find(r => r.id === selectedResource);
-    if (!resource || resource.trail.length < 2) return [];
+    // Get realistic movement trail for the selected resource
+    const trail = getResourceTrail(selectedResource, timeRange);
+    if (trail.length < 2) return [];
 
     const elements = [];
 
     // Draw trail as connected line segments with load-based coloring
-    for (let i = 0; i < resource.trail.length - 1; i++) {
-      const current = resource.trail[i];
-      const next = resource.trail[i + 1];
+    for (let i = 0; i < trail.length - 1; i++) {
+      const current = trail[i];
+      const next = trail[i + 1];
       
       // Use the load status from the current point to determine color
       const strokeColor = current.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(0, 0%, 100%)'; // Orange for loaded, White for unloaded
       
       elements.push(
         <Line
-          key={`trail-${resource.id}-${i}`}
+          key={`trail-${selectedResource}-${i}`}
           points={[current.x, current.y, next.x, next.y]}
           stroke={strokeColor}
           strokeWidth={3}
@@ -219,7 +221,7 @@ function WarehouseCanvas({
     }
 
     return elements;
-  }, [selectedResource, forklifts, bopts]);
+  }, [selectedResource, timeRange]);
 
   // Render forklifts
   const renderForklifts = useCallback(() => {

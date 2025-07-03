@@ -177,6 +177,7 @@ function WarehouseDashboard() {
               selectedResource={selectedResource}
               showTrails={showTrails}
               searchHighlight={searchHighlight}
+              timeRange={timeRange}
             />
 
             {/* Canvas Controls Overlay */}
