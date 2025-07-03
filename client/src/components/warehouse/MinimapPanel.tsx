@@ -6,9 +6,10 @@ import { ForkliftResource } from '@/lib/warehouse/types';
 interface MinimapPanelProps {
   forklifts: ForkliftResource[];
   activeHeatmap: string;
+  sidebarCollapsed?: boolean;
 }
 
-export function MinimapPanel({ forklifts, activeHeatmap }: MinimapPanelProps) {
+export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = false }: MinimapPanelProps) {
   const stageRef = useRef<any>(null);
 
   const renderMiniWarehouse = () => {
@@ -71,7 +72,7 @@ export function MinimapPanel({ forklifts, activeHeatmap }: MinimapPanelProps) {
   };
 
   return (
-    <div className="w-80 bg-[hsl(0,0%,11.8%)] border-l border-gray-700 p-4">
+    <div className={`${sidebarCollapsed ? 'w-96' : 'w-80'} bg-[hsl(0,0%,11.8%)] border-l border-gray-700 p-4 transition-all duration-300`}>
       <h3 className="text-sm font-medium mb-3 text-[hsl(0,0%,88.2%)]">Overview</h3>
       
       {/* Minimap Canvas */}

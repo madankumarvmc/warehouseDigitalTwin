@@ -219,6 +219,7 @@ function WarehouseDashboard() {
           <MinimapPanel
             forklifts={forklifts}
             activeHeatmap={activeHeatmapType}
+            sidebarCollapsed={sidebarCollapsed}
           />
         </div>
       </div>
