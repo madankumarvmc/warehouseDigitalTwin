@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Heatmap Color Legend</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+            background: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .heatmap-layer {
+            margin-bottom: 35px;
+            padding: 20px;
+            border: 1px solid #e1e8ed;
+            border-radius: 6px;
+            background: #fafbfc;
+        }
+        .color-gradient {
+            height: 40px;
+            margin: 15px 0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .color-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .description {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f1f3f4;
+            border-left: 4px solid #3498db;
+            border-radius: 0 4px 4px 0;
+        }
+        .usage-guide {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 6px;
+        }
+        .opacity-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e8ed;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Warehouse Heatmap Color Legend</h1>
+        
+        <div class="usage-guide">
+            <h2>📊 How to Use Heatmaps</h2>
+            <p><strong>Heatmaps provide visual insights into warehouse operations by overlaying data-driven colors on storage locations.</strong></p>
+            <ul>
+                <li><strong>Darker/More Intense Colors:</strong> Higher activity, volume, or issues</li>
+                <li><strong>Lighter/Cooler Colors:</strong> Lower activity or normal conditions</li>
+                <li><strong>No Color/Transparent:</strong> No activity or data for that location</li>
+            </ul>
+        </div>
+
+        <div class="opacity-info">
+            <strong>💡 Tip:</strong> Use the opacity controls in the sidebar to adjust layer intensity. Lower opacity allows you to see underlying warehouse structure while higher opacity emphasizes the data patterns.
+        </div>
+
+        <!-- Volume Heatmap -->
+        <div class="heatmap-layer">
+            <h2>📦 Volume Heatmap</h2>
+            <div class="color-gradient" style="background: linear-gradient(to right, hsl(207, 90%, 54%), hsl(4, 90%, 58%));">
+            </div>
+            <div class="color-labels">
+                <span>Low Volume</span>
+                <span>High Volume</span>
+            </div>
+            <div class="description">
+                <strong>Purpose:</strong> Shows the quantity of items stored or moved through each location.<br>
+                <strong>Blue Areas:</strong> Low to moderate inventory volumes<br>
+                <strong>Red Areas:</strong> High inventory volumes, heavy storage utilization<br>
+                <strong>Use Case:</strong> Identify storage capacity utilization and popular picking locations
+            </div>
+        </div>
+
+        <!-- Frequency Heatmap -->
+        <div class="heatmap-layer">
+            <h2>🔄 Frequency Heatmap</h2>
+            <div class="color-gradient" style="background: linear-gradient(to right, hsl(145, 63%, 13%), hsl(122, 39%, 49%));">
+            </div>
+            <div class="color-labels">
+                <span>Infrequent Access</span>
+                <span>High Frequency Access</span>
+            </div>
+            <div class="description">
+                <strong>Purpose:</strong> Displays how often locations are accessed for picking, restocking, or movement.<br>
+                <strong>Dark Green Areas:</strong> Rarely accessed locations<br>
+                <strong>Bright Green Areas:</strong> Frequently accessed, high-traffic locations<br>
+                <strong>Use Case:</strong> Optimize warehouse layout by placing fast-moving items in easily accessible locations
+            </div>
+        </div>
+
+        <!-- Occupancy Heatmap -->
+        <div class="heatmap-layer">
+            <h2>🏢 Occupancy Heatmap</h2>
+            <div class="color-gradient" style="background: linear-gradient(to right, hsl(39, 100%, 50%), hsl(45, 100%, 51%));">
+            </div>
+            <div class="color-labels">
+                <span>Empty/Low Occupancy</span>
+                <span>Full/High Occupancy</span>
+            </div>
+            <div class="description">
+                <strong>Purpose:</strong> Shows how full each storage location is as a percentage of capacity.<br>
+                <strong>Light Orange Areas:</strong> Empty or low occupancy locations<br>
+                <strong>Dark Orange Areas:</strong> Full or near-capacity locations<br>
+                <strong>Use Case:</strong> Identify available storage space and prevent overstocking
+            </div>
+        </div>
+
+        <!-- Misplacement Heatmap -->
+        <div class="heatmap-layer">
+            <h2>⚠️ Misplacement Heatmap</h2>
+            <div class="color-gradient" style="background: linear-gradient(to right, hsl(4, 66%, 47%), hsl(14, 100%, 57%));">
+            </div>
+            <div class="color-labels">
+                <span>Correct Placement</span>
+                <span>High Misplacement</span>
+            </div>
+            <div class="description">
+                <strong>Purpose:</strong> Identifies locations where items are stored incorrectly or in wrong zones.<br>
+                <strong>Light Red Areas:</strong> Minimal misplacement issues<br>
+                <strong>Dark Red Areas:</strong> High rates of misplaced inventory<br>
+                <strong>Use Case:</strong> Focus training and process improvements on problem areas to reduce picking errors
+            </div>
+        </div>
+
+        <!-- Expiry Heatmap -->
+        <div class="heatmap-layer">
+            <h2>⏰ Expiry Heatmap</h2>
+            <div class="color-gradient" style="background: linear-gradient(to right, hsl(39, 100%, 50%), hsl(45, 100%, 51%));">
+            </div>
+            <div class="color-labels">
+                <span>Fresh/Long Shelf Life</span>
+                <span>Near Expiry/Urgent</span>
+            </div>
+            <div class="description">
+                <strong>Purpose:</strong> Tracks products approaching expiration dates for FIFO (First In, First Out) management.<br>
+                <strong>Light Yellow Areas:</strong> Products with long remaining shelf life<br>
+                <strong>Dark Yellow Areas:</strong> Products requiring urgent attention due to approaching expiry<br>
+                <strong>Use Case:</strong> Prioritize picking and movement of time-sensitive inventory to minimize waste
+            </div>
+        </div>
+
+        <!-- Exceptions Heatmap -->
+        <div class="heatmap-layer">
+            <h2>🚨 Exceptions Heatmap</h2>
+            <div class="color-gradient" style="background: linear-gradient(to right, hsl(291, 64%, 42%), hsl(292, 76%, 53%));">
+            </div>
+            <div class="color-labels">
+                <span>Normal Operations</span>
+                <span>Critical Exceptions</span>
+            </div>
+            <div class="description">
+                <strong>Purpose:</strong> Highlights locations with operational issues, errors, or anomalies.<br>
+                <strong>Light Purple Areas:</strong> Normal operations, no exceptions<br>
+                <strong>Dark Purple Areas:</strong> Critical exceptions requiring immediate attention<br>
+                <strong>Use Case:</strong> Quickly identify and respond to operational problems, system errors, or safety issues
+            </div>
+        </div>
+
+        <div class="usage-guide">
+            <h2>🎛️ Interactive Controls</h2>
+            <ul>
+                <li><strong>Layer Toggle:</strong> Click the eye icon next to each layer name to show/hide</li>
+                <li><strong>Opacity Slider:</strong> Adjust transparency to balance data visibility with warehouse layout</li>
+                <li><strong>Time Range:</strong> Modify data timeframe from 15 minutes to 24 hours</li>
+                <li><strong>Single Layer View:</strong> Only one heatmap layer can be active at a time for clarity</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p><strong>Warehouse Visibility Demo Platform</strong><br>
+            Generated on: <script>document.write(new Date().toLocaleDateString());</script><br>
+            Interactive heatmaps provide real-time operational insights for data-driven warehouse management.</p>
+        </div>
+    </div>
+
+    <script>
+        // Add current date
+        document.addEventListener('DOMContentLoaded', function() {
+            window.print();
+        });
+    </script>
+</body>
+</html>

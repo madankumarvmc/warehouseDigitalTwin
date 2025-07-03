@@ -7,6 +7,7 @@ import { TimeRangeControls } from './TimeRangeControls';
 import { ResourceTracking } from './ResourceTracking';
 import { SKUSearch } from './SKUSearch';
 import { ExportControls } from './ExportControls';
+import { HeatmapLegendPDF } from './HeatmapLegendPDF';
 
 interface CollapsibleSidebarProps {
   isCollapsed: boolean;
@@ -92,8 +93,12 @@ export function CollapsibleSidebar({
             </div>
 
             {/* Export Controls */}
-            <div className="p-4 mt-auto">
+            <div className="p-4 mt-auto space-y-3">
               <ExportControls onExport={onExport} />
+              <div className="border-t border-gray-700 pt-3">
+                <h3 className="text-sm font-medium text-[hsl(0,0%,70.2%)] mb-2">Documentation</h3>
+                <HeatmapLegendPDF onDownload={() => console.log('Heatmap legend downloaded')} />
+              </div>
             </div>
           </motion.div>
         )}
