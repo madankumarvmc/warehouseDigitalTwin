@@ -29,6 +29,7 @@ function WarehouseCanvas({
 }: WarehouseCanvasProps) {
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const zoomTimeoutRef = useRef<number | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [viewport, setViewport] = useState<ViewportState>({
     zoom: 1,
@@ -105,28 +106,51 @@ function WarehouseCanvas({
         />
       );
 
-      // Racks on both sides
+      // Simplified racks - only draw outlines instead of individual cells
       for (let side = 0; side < 2; side++) {
         const rackX = aisleX + side * (cellWidth + aisleWidth);
         
-        for (let bin = 0; bin < 60; bin++) {
-          for (let level = 0; level < 3; level++) {
-            const x = rackX;
-            const y = bin * cellHeight + level * cellHeight * 60;
-            
-            elements.push(
-              <Rect
-                key={`rack-${aisle}-${side}-${bin}-${level}`}
-                x={x}
-                y={y}
-                width={cellWidth}
-                height={cellHeight}
-                fill="hsl(0, 0%, 17.6%)"
-                stroke="hsl(0, 0%, 33.3%)"
-                strokeWidth={1}
-                opacity={0.8}
-              />
-            );
+        // Draw rack outline instead of individual cells
+        elements.push(
+          <Rect
+            key={`rack-outline-${aisle}-${side}`}
+            x={rackX}
+            y={0}
+            width={cellWidth}
+            height={60 * cellHeight}
+            fill="hsl(0, 0%, 17.6%)"
+            stroke="hsl(0, 0%, 33.3%)"
+            strokeWidth={1}
+            opacity={0.8}
+            perfectDrawEnabled={false}
+            listening={false}
+          />
+        );
+
+        // Only draw individual cells when zoomed in significantly
+        if (viewport.zoom > 1.5) {
+          // Reduce cell count by showing every 5th bin
+          for (let bin = 0; bin < 60; bin += 5) {
+            for (let level = 0; level < 3; level++) {
+              const x = rackX;
+              const y = bin * cellHeight + level * cellHeight * 60;
+              
+              elements.push(
+                <Rect
+                  key={`rack-${aisle}-${side}-${bin}-${level}`}
+                  x={x}
+                  y={y}
+                  width={cellWidth}
+                  height={cellHeight}
+                  fill="hsl(0, 0%, 15%)"
+                  stroke="hsl(0, 0%, 25%)"
+                  strokeWidth={0.5}
+                  opacity={0.6}
+                  perfectDrawEnabled={false}
+                  listening={false}
+                />
+              );
+            }
           }
         }
       }
@@ -135,20 +159,28 @@ function WarehouseCanvas({
     return elements;
   }, []);
 
-  // Render heatmap overlay
+  // Optimized heatmap rendering with fewer elements
   const renderHeatmap = useCallback(() => {
     if (!activeLayers[activeHeatmapType] || !heatmapData.length) return [];
+
+    // Only render heatmap cells that have significant values (> 0.1) to reduce element count
+    const significantData = heatmapData.filter(({ value }) => value > 0.1);
+    if (significantData.length === 0) return [];
 
     const elements = [];
     const colors = heatmapColors[activeHeatmapType as keyof typeof heatmapColors];
     const opacity = layerOpacity[activeHeatmapType] || 0.8;
 
-    heatmapData.forEach(({ cellId, value }) => {
-      const cell = warehouseLayout.cells.find(c => c.cellId === cellId);
-      if (!cell || value === 0) return;
+    // Limit to first 200 most significant cells for performance
+    const limitedData = significantData
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 200);
 
-      // Interpolate between start and end colors based on value
-      const alpha = value * opacity;
+    limitedData.forEach(({ cellId, value }) => {
+      const cell = warehouseLayout.cells.find(c => c.cellId === cellId);
+      if (!cell) return;
+
+      const alpha = Math.min(value * opacity, 0.8);
       const color = value > 0.5 ? 
         hslToRgb(colors.end, alpha) : 
         hslToRgb(colors.start, alpha);
@@ -161,6 +193,7 @@ function WarehouseCanvas({
           width={cell.width}
           height={cell.height}
           fill={color}
+          perfectDrawEnabled={false}
         />
       );
     });
@@ -217,20 +250,7 @@ function WarehouseCanvas({
       />
     );
 
-    // Add load status indicators along trail
-    forklift.trail.forEach((point, index) => {
-      if (index % 5 === 0) { // Show every 5th point
-        elements.push(
-          <Circle
-            key={`trail-point-${selectedForklift}-${index}`}
-            x={point.x}
-            y={point.y}
-            radius={2}
-            fill={point.loaded ? 'hsl(122, 39%, 49%)' : 'hsl(4, 90%, 58%)'}
-          />
-        );
-      }
-    });
+    // Removed trail points for better performance
 
     return elements;
   }, [showTrails, selectedForklift, forklifts]);
@@ -255,6 +275,7 @@ function WarehouseCanvas({
           strokeWidth={2}
           onClick={() => onForkliftSelect(forklift.id)}
           onTap={() => onForkliftSelect(forklift.id)}
+          perfectDrawEnabled={false}
         />
       );
 
@@ -291,7 +312,7 @@ function WarehouseCanvas({
     return elements;
   }, [activeLayers.resources, forklifts, selectedForklift, onForkliftSelect]);
 
-  // Handle wheel zoom
+  // Optimized wheel zoom with throttling
   const handleWheel = useCallback((e: any) => {
     e.evt.preventDefault();
     
@@ -301,15 +322,12 @@ function WarehouseCanvas({
     const oldScale = stage.scaleX();
     const pointer = stage.getPointerPosition();
     
-    const scaleBy = 1.05;
+    // Faster zoom increments for less lag
+    const scaleBy = 1.1;
     const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
     const clampedScale = Math.max(0.1, Math.min(3, newScale));
 
-    setViewport(prev => ({
-      ...prev,
-      zoom: clampedScale,
-    }));
-
+    // Update stage immediately for responsive feel
     stage.scale({ x: clampedScale, y: clampedScale });
     
     const newPos = {
@@ -318,11 +336,16 @@ function WarehouseCanvas({
     };
     
     stage.position(newPos);
-    setViewport(prev => ({
-      ...prev,
-      panX: newPos.x,
-      panY: newPos.y,
-    }));
+    
+    // Throttle React state updates to reduce re-renders
+    if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
+    zoomTimeoutRef.current = setTimeout(() => {
+      setViewport({
+        zoom: clampedScale,
+        panX: newPos.x,
+        panY: newPos.y,
+      });
+    }, 100);
   }, []);
 
   // Handle drag
@@ -347,8 +370,12 @@ function WarehouseCanvas({
         scaleY={viewport.zoom}
         x={viewport.panX}
         y={viewport.panY}
+        pixelRatio={1}
       >
-        <Layer>
+        <Layer
+          hitGraphEnabled={false}
+          perfectDrawEnabled={false}
+        >
           {renderWarehouseGrid()}
           {renderHeatmap()}
           {renderSearchHighlights()}
