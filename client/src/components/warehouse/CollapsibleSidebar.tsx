@@ -43,7 +43,7 @@ export function CollapsibleSidebar({
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="absolute left-0 top-0 w-80 bg-[hsl(0,0%,11.8%)] border-r border-gray-700 flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 z-20"
+            className="absolute left-0 top-12 w-80 bg-[hsl(0,0%,11.8%)] border-r border-gray-700 flex flex-col h-[calc(100vh-3rem)] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 z-20"
           >
             {/* Sidebar Header */}
             <div className="p-4 border-b border-gray-700">
@@ -111,7 +111,7 @@ export function CollapsibleSidebar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed left-4 top-4 z-50"
+            className="fixed left-4 top-16 z-50"
           >
             <Button
               onClick={onToggle}
