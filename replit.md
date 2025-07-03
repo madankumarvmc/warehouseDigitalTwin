@@ -31,7 +31,7 @@ This is a React-based warehouse visibility demonstration system built with TypeS
 
 ### Warehouse Visualization Engine
 - **Interactive Canvas**: Pan and zoom capabilities with smooth 30 FPS rendering
-- **Grid Layout**: 4-aisle warehouse with 720 bin faces (4 aisles × 60 bins × 3 levels)
+- **Grid Layout**: 5-aisle warehouse with 240 bin faces (5 aisles × 12 bins × 2 levels × 2 depth)
 - **Cell Addressing**: Structured format: {Aisle}-{Bin}-{Level}-{Depth} (e.g., "A2-B37-L2-D1")
 
 ### Heatmap System
@@ -120,6 +120,12 @@ This is a React-based warehouse visibility demonstration system built with TypeS
 ```
 Changelog:
 - July 03, 2025. Initial setup
+- July 03, 2025. Performance optimizations implemented:
+  * Reduced warehouse bins from 1440 to 240 (5 aisles × 12 bins × 2 levels × 2 depth)
+  * Optimized heatmap rendering - filters insignificant data, limits to top 200 cells
+  * Throttled resource updates to 3-second intervals
+  * Enhanced zoom performance with faster increments and throttled React updates
+  * Added perfectDrawEnabled={false} to canvas elements for better performance
 ```
 
 ## User Preferences

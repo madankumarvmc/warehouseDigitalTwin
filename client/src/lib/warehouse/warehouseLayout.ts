@@ -2,7 +2,7 @@ import { WarehouseLayout, CellPosition } from './types';
 
 export const warehouseConfig = {
   aisles: ['A1', 'A2', 'A3', 'A4', 'A5'],
-  binsPerAisle: 20,
+  binsPerAisle: 12,
   levels: 2,
   depth: 2,
   cellWidth: 40,
