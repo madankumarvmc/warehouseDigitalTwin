@@ -185,11 +185,21 @@ function WarehouseCanvas({
 
   // Render resource trails with color coding using realistic movement data
   const renderResourceTrails = useCallback(() => {
-    if (!selectedResource) return [];
+    if (!selectedResource) {
+      console.log('No selected resource');
+      return [];
+    }
 
+    console.log('Rendering trails for:', selectedResource, 'timeRange:', timeRange);
+    
     // Get realistic movement trail for the selected resource
     const trail = getResourceTrail(selectedResource, timeRange);
-    if (trail.length < 2) return [];
+    console.log('Trail points received:', trail.length);
+    
+    if (trail.length < 2) {
+      console.log('Not enough trail points, returning empty');
+      return [];
+    }
 
     const elements = [];
 

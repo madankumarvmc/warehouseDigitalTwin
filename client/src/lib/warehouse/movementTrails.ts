@@ -202,27 +202,27 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
 export function generateMovementTrails(timeRange: number): MovementTrail[] {
   const trails: MovementTrail[] = [];
   
-  // Generate forklift trails
-  for (let i = 1; i <= 3; i++) {
-    const forkliftId = `FL-${i.toString().padStart(3, '0')}`;
+  // Generate forklift trails - match exact IDs from resourceSimulator
+  const forkliftIds = ['FL-001', 'FL-002', 'FL-003'];
+  forkliftIds.forEach(forkliftId => {
     trails.push({
       resourceId: forkliftId,
       resourceType: 'forklift',
       trail: generateForkliftTrail(forkliftId, timeRange),
       timeRange
     });
-  }
+  });
   
-  // Generate BOPT trails
-  for (let i = 1; i <= 5; i++) {
-    const boptId = `BOPT-${i.toString().padStart(3, '0')}`;
+  // Generate BOPT trails - match exact IDs from resourceSimulator
+  const boptIds = ['BOPT-001', 'BOPT-002', 'BOPT-003', 'BOPT-004', 'BOPT-005'];
+  boptIds.forEach(boptId => {
     trails.push({
       resourceId: boptId,
       resourceType: 'bopt',
       trail: generateBOPTTrail(boptId, timeRange),
       timeRange
     });
-  }
+  });
   
   return trails;
 }
@@ -231,5 +231,11 @@ export function generateMovementTrails(timeRange: number): MovementTrail[] {
 export function getResourceTrail(resourceId: string, timeRange: number): TrailPoint[] {
   const trails = generateMovementTrails(timeRange);
   const resourceTrail = trails.find(t => t.resourceId === resourceId);
+  
+  // Debug logging to see what's happening
+  console.log('Requested trail for:', resourceId);
+  console.log('Available trails:', trails.map(t => ({ id: t.resourceId, points: t.trail.length })));
+  console.log('Found trail:', resourceTrail ? resourceTrail.trail.length : 'none');
+  
   return resourceTrail ? resourceTrail.trail : [];
 }
