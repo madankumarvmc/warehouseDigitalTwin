@@ -193,7 +193,7 @@ function WarehouseCanvas({
 
     const elements = [];
 
-    // Draw trail as connected line segments with load-based coloring
+    // Draw trail as straight lines connecting discrete points
     for (let i = 0; i < trail.length - 1; i++) {
       const current = trail[i];
       const next = trail[i + 1];
@@ -201,24 +201,38 @@ function WarehouseCanvas({
       // Use the load status from the current point to determine color
       const strokeColor = current.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(0, 0%, 100%)'; // Orange for loaded, White for unloaded
       
+      // Create straight line connection
       elements.push(
         <Line
           key={`trail-${selectedResource}-${i}`}
           points={[current.x, current.y, next.x, next.y]}
           stroke={strokeColor}
-          strokeWidth={3}
-          opacity={0.9}
+          strokeWidth={2}
+          opacity={0.8}
           lineCap="round"
-          lineJoin="round"
           perfectDrawEnabled={false}
           listening={false}
-          shadowColor="rgba(0, 0, 0, 0.3)"
-          shadowBlur={2}
-          shadowOffsetX={1}
-          shadowOffsetY={1}
         />
       );
     }
+
+    // Add waypoint markers at each trail point
+    trail.forEach((point, index) => {
+      elements.push(
+        <Circle
+          key={`waypoint-${selectedResource}-${index}`}
+          x={point.x}
+          y={point.y}
+          radius={3}
+          fill={point.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(0, 0%, 100%)'}
+          stroke="hsl(207, 90%, 54%)"
+          strokeWidth={1}
+          opacity={0.7}
+          perfectDrawEnabled={false}
+          listening={false}
+        />
+      );
+    });
 
     return elements;
   }, [selectedResource, timeRange]);

@@ -58,12 +58,20 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   const timeSpan = timeRange * 60 * 1000; // Convert to milliseconds
   const primaryAisle = parseInt(forkliftId.split('-')[1]) % 5; // Assign primary aisle based on ID
   
-  let currentTime = now - timeSpan;
-  let currentLocationData = getRandomCellInAisle(primaryAisle);
-  let currentLocation = { x: currentLocationData.x, y: currentLocationData.y, id: currentLocationData.cellId };
-  let isLoaded = false;
+  // Create more diverse starting locations across warehouse
+  const startingZones = [
+    ...Object.values(WAREHOUSE_ZONES),
+    ...Array.from({length: 5}, (_, i) => {
+      const center = getAisleCenter(i);
+      return { x: center.x, y: center.y + (Math.random() - 0.5) * 200, id: `AISLE-${i}` };
+    })
+  ];
   
-  // Start at aisle position
+  let currentTime = now - timeSpan;
+  let currentLocation = startingZones[Math.floor(Math.random() * startingZones.length)];
+  let isLoaded = Math.random() < 0.3; // 30% chance to start loaded
+  
+  // Start position
   trail.push({
     x: currentLocation.x,
     y: currentLocation.y,
@@ -73,88 +81,49 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
     action: 'transit'
   });
   
-  // Generate movement sequence (every 2-3 minutes)
-  const movementInterval = 2 * 60 * 1000; // 2 minutes
-  const numMoves = Math.floor(timeSpan / movementInterval);
+  // Generate movement sequence based on time range (more points for longer ranges)
+  const movementInterval = Math.max(30000, (timeSpan / 20)); // 20 moves max, min 30 seconds apart
+  const numMoves = Math.min(20, Math.floor(timeSpan / movementInterval));
   
   for (let i = 0; i < numMoves; i++) {
-    currentTime += movementInterval + (Math.random() * 60 * 1000); // Add some variance
+    currentTime += movementInterval;
     
-    // 80% chance to stay in primary aisle, 20% to venture to other areas
-    if (Math.random() < 0.8) {
-      // Stay in primary aisle
-      const newLocationData = getRandomCellInAisle(primaryAisle);
-      currentLocation = { x: newLocationData.x, y: newLocationData.y, id: newLocationData.cellId };
-      
-      // Simulate pickup/dropoff cycle
-      if (!isLoaded && Math.random() < 0.6) {
-        // Pickup item
-        isLoaded = true;
-        trail.push({
-          x: currentLocation.x,
-          y: currentLocation.y,
-          loaded: isLoaded,
-          timestamp: currentTime,
-          locationId: currentLocation.id,
-          action: 'pickup'
-        });
-      } else if (isLoaded && Math.random() < 0.4) {
-        // Dropoff item
-        isLoaded = false;
-        trail.push({
-          x: currentLocation.x,
-          y: currentLocation.y,
-          loaded: isLoaded,
-          timestamp: currentTime,
-          locationId: currentLocation.id,
-          action: 'dropoff'
-        });
-      } else {
-        // Transit movement
-        trail.push({
-          x: currentLocation.x,
-          y: currentLocation.y,
-          loaded: isLoaded,
-          timestamp: currentTime,
-          locationId: currentLocation.id,
-          action: 'transit'
-        });
-      }
+    // Skip points that are beyond the current time range
+    if (currentTime > now - (timeRange * 60 * 1000)) break;
+    
+    let nextLocation;
+    
+    // Determine next destination with varied movement patterns
+    if (Math.random() < 0.6) {
+      // Move within warehouse aisles (60% of time)
+      const targetAisle = Math.random() < 0.7 ? primaryAisle : Math.floor(Math.random() * 5);
+      const aisleData = getRandomCellInAisle(targetAisle);
+      nextLocation = { x: aisleData.x, y: aisleData.y, id: aisleData.cellId };
     } else {
-      // Move to different area (receiving, shipping, staging)
+      // Move to warehouse zones (40% of time)
       const zones = Object.values(WAREHOUSE_ZONES);
-      const targetZone = zones[Math.floor(Math.random() * zones.length)];
-      
-      // Add intermediate points for realistic path
-      const steps = 3;
-      const deltaX = (targetZone.x - currentLocation.x) / steps;
-      const deltaY = (targetZone.y - currentLocation.y) / steps;
-      
-      for (let step = 1; step <= steps; step++) {
-        const stepTime = currentTime + (step * 30000); // 30 seconds per step
-        trail.push({
-          x: currentLocation.x + (deltaX * step),
-          y: currentLocation.y + (deltaY * step),
-          loaded: isLoaded,
-          timestamp: stepTime,
-          locationId: step === steps ? targetZone.id : 'TRANSIT',
-          action: 'transit'
-        });
-      }
-      
-      currentLocation = { x: targetZone.x, y: targetZone.y, id: targetZone.id };
-      currentTime += steps * 30000;
-      
-      // Likely to change load status at zones
-      if (targetZone.id.includes('RECV') && !isLoaded) {
-        isLoaded = true;
-      } else if (targetZone.id.includes('SHIP') && isLoaded) {
-        isLoaded = false;
-      }
+      nextLocation = zones[Math.floor(Math.random() * zones.length)];
     }
+    
+    // Add the movement point
+    trail.push({
+      x: nextLocation.x,
+      y: nextLocation.y,
+      loaded: isLoaded,
+      timestamp: currentTime,
+      locationId: nextLocation.id,
+      action: 'transit'
+    });
+    
+    // Change load status occasionally
+    if (Math.random() < 0.3) {
+      isLoaded = !isLoaded;
+    }
+    
+    currentLocation = nextLocation;
   }
   
-  return trail;
+  return trail.filter(point => point.timestamp >= (now - timeRange * 60 * 1000));
 }
 
 // Generate realistic BOPT movement trail (more horizontal, cross-aisle movement)
@@ -163,11 +132,23 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
   const now = Date.now();
   const timeSpan = timeRange * 60 * 1000;
   
-  let currentTime = now - timeSpan;
-  let currentLocation = WAREHOUSE_ZONES.RECEIVING; // BOPTs often start at receiving
-  let isLoaded = false;
+  // BOPTs start from various horizontal locations
+  const startingLocations = [
+    WAREHOUSE_ZONES.RECEIVING,
+    WAREHOUSE_ZONES.SHIPPING,
+    WAREHOUSE_ZONES.STAGING,
+    ...Array.from({length: 8}, (_, i) => {
+      const x = 100 + (i * 100);
+      const y = 150 + (Math.random() * 300);
+      return { x, y, id: `CROSS-${i}` };
+    })
+  ];
   
-  // Start at receiving
+  let currentTime = now - timeSpan;
+  let currentLocation = startingLocations[Math.floor(Math.random() * startingLocations.length)];
+  let isLoaded = Math.random() < 0.4;
+  
+  // Start position
   trail.push({
     x: currentLocation.x,
     y: currentLocation.y,
@@ -177,69 +158,44 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
     action: 'transit'
   });
   
-  // BOPTs move more frequently but shorter distances
-  const movementInterval = 90 * 1000; // 90 seconds
-  const numMoves = Math.floor(timeSpan / movementInterval);
+  // Generate movement sequence based on time range
+  const movementInterval = Math.max(45000, (timeSpan / 15));
+  const numMoves = Math.min(15, Math.floor(timeSpan / movementInterval));
   
   for (let i = 0; i < numMoves; i++) {
-    currentTime += movementInterval + (Math.random() * 30 * 1000);
+    currentTime += movementInterval;
     
-    // BOPTs primarily move horizontally between aisles and zones
-    if (Math.random() < 0.6) {
-      // Move to random aisle (horizontal movement pattern)
+    if (currentTime > now - (timeRange * 60 * 1000)) break;
+    
+    let nextLocation;
+    
+    // BOPTs move more horizontally across warehouse
+    if (Math.random() < 0.7) {
       const targetAisle = Math.floor(Math.random() * 5);
-      const aisleLocation = getRandomCellInAisle(targetAisle);
-      
-      // Create horizontal path
-      const steps = Math.max(2, Math.floor(Math.abs(aisleLocation.x - currentLocation.x) / 100));
-      const deltaX = (aisleLocation.x - currentLocation.x) / steps;
-      const deltaY = (aisleLocation.y - currentLocation.y) / steps;
-      
-      for (let step = 1; step <= steps; step++) {
-        const stepTime = currentTime + (step * 20000); // 20 seconds per step
-        trail.push({
-          x: currentLocation.x + (deltaX * step),
-          y: currentLocation.y + (deltaY * step),
-          loaded: isLoaded,
-          timestamp: stepTime,
-          locationId: step === steps ? aisleLocation.cellId : 'TRANSIT',
-          action: 'transit'
-        });
-      }
-      
-      currentLocation = { x: aisleLocation.x, y: aisleLocation.y, id: aisleLocation.cellId };
-      currentTime += steps * 20000;
-      
-      // BOPTs handle smaller items, frequent load changes
-      if (Math.random() < 0.5) {
-        isLoaded = !isLoaded;
-      }
+      const aisleData = getRandomCellInAisle(targetAisle);
+      nextLocation = { x: aisleData.x, y: aisleData.y, id: aisleData.cellId };
     } else {
-      // Move to zone (staging, shipping, etc.)
-      const zones = [WAREHOUSE_ZONES.STAGING, WAREHOUSE_ZONES.SHIPPING, WAREHOUSE_ZONES.RECEIVING];
-      const targetZone = zones[Math.floor(Math.random() * zones.length)];
-      
-      trail.push({
-        x: targetZone.x,
-        y: targetZone.y,
-        loaded: isLoaded,
-        timestamp: currentTime,
-        locationId: targetZone.id,
-        action: targetZone.id.includes('RECV') ? 'pickup' : 'dropoff'
-      });
-      
-      currentLocation = targetZone;
-      
-      // Change load status at zones
-      if (targetZone.id.includes('RECV')) {
-        isLoaded = true;
-      } else if (targetZone.id.includes('SHIP')) {
-        isLoaded = false;
-      }
+      const zones = Object.values(WAREHOUSE_ZONES);
+      nextLocation = zones[Math.floor(Math.random() * zones.length)];
     }
+    
+    trail.push({
+      x: nextLocation.x,
+      y: nextLocation.y,
+      loaded: isLoaded,
+      timestamp: currentTime,
+      locationId: nextLocation.id,
+      action: 'transit'
+    });
+    
+    if (Math.random() < 0.4) {
+      isLoaded = !isLoaded;
+    }
+    
+    currentLocation = nextLocation;
   }
   
-  return trail;
+  return trail.filter(point => point.timestamp >= (now - timeRange * 60 * 1000));
 }
 
 // Generate movement trails for all resources
