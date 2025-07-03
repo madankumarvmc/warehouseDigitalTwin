@@ -6,7 +6,7 @@ export class ResourceSimulator {
   private animationId: number | null = null;
   private listeners: ((forklifts: ForkliftResource[]) => void)[] = [];
   private lastUpdateTime: number = 0;
-  private readonly UPDATE_INTERVAL = 3000; // Update every 3 seconds for better performance
+  private readonly UPDATE_INTERVAL = 1000; // Update every 1 second instead of 60 FPS
 
   constructor() {
     this.initializeForklifts();
