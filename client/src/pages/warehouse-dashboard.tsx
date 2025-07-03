@@ -10,6 +10,7 @@ import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
 
 function WarehouseDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
   const [searchHighlight, setSearchHighlight] = useState<string[]>([]);
   const [currentZoom, setCurrentZoom] = useState(100);
   const [currentPosition, setCurrentPosition] = useState({ x: 0, y: 0 });
@@ -163,7 +164,7 @@ function WarehouseDashboard() {
         {/* Canvas and Minimap Container */}
         <div className="flex-1 flex">
           {/* Main Canvas Area */}
-          <div className="flex-1 relative">
+          <div className={`flex-1 relative transition-all duration-300 ${rightSidebarCollapsed ? 'mr-0' : ''}`}>
             <WarehouseCanvas
               heatmapData={heatmapData}
               forklifts={forklifts}
@@ -216,11 +217,26 @@ function WarehouseDashboard() {
           </div>
 
           {/* Minimap Panel */}
-          <MinimapPanel
-            forklifts={forklifts}
-            activeHeatmap={activeHeatmapType}
-            sidebarCollapsed={sidebarCollapsed}
-          />
+          {!rightSidebarCollapsed && (
+            <MinimapPanel
+              forklifts={forklifts}
+              activeHeatmap={activeHeatmapType}
+              sidebarCollapsed={sidebarCollapsed}
+              isCollapsed={rightSidebarCollapsed}
+              onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+            />
+          )}
+          
+          {/* Collapsed Right Sidebar Toggle */}
+          {rightSidebarCollapsed && (
+            <MinimapPanel
+              forklifts={forklifts}
+              activeHeatmap={activeHeatmapType}
+              sidebarCollapsed={sidebarCollapsed}
+              isCollapsed={rightSidebarCollapsed}
+              onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+            />
+          )}
         </div>
       </div>
     </div>

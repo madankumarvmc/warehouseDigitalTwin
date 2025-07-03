@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Stage, Layer, Rect, Circle } from 'react-konva';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
 import { ForkliftResource } from '@/lib/warehouse/types';
 
@@ -7,9 +9,11 @@ interface MinimapPanelProps {
   forklifts: ForkliftResource[];
   activeHeatmap: string;
   sidebarCollapsed?: boolean;
+  isCollapsed?: boolean;
+  onToggle?: () => void;
 }
 
-export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = false }: MinimapPanelProps) {
+export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = false, isCollapsed = false, onToggle }: MinimapPanelProps) {
   const stageRef = useRef<any>(null);
 
   const renderMiniWarehouse = () => {
@@ -71,9 +75,36 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
     return elements;
   };
 
+  if (isCollapsed) {
+    return (
+      <div className="relative">
+        {/* Collapsed state - floating toggle button */}
+        <Button
+          onClick={onToggle}
+          className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-[hsl(207,90%,54%)] hover:bg-[hsl(212,78%,46%)] text-white p-3 rounded-l-lg shadow-lg z-30"
+          title="Show Overview"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className={`${sidebarCollapsed ? 'w-96' : 'w-80'} bg-[hsl(0,0%,11.8%)] border-l border-gray-700 p-4 transition-all duration-300`}>
-      <h3 className="text-sm font-medium mb-3 text-[hsl(0,0%,88.2%)]">Overview</h3>
+    <div className={`${sidebarCollapsed ? 'w-96' : 'w-80'} bg-[hsl(0,0%,11.8%)] border-l border-gray-700 p-4 transition-all duration-300 relative`}>
+      {/* Header with collapse button */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-[hsl(0,0%,88.2%)]">Overview</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onToggle}
+          className="text-[hsl(0,0%,70.2%)] hover:text-[hsl(207,90%,54%)] hover:bg-[hsl(0,0%,17.6%)]"
+          title="Hide Overview"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
       
       {/* Minimap Canvas */}
       <div className="relative bg-[hsl(0,0%,7.1%)] rounded border border-gray-600 aspect-square">
