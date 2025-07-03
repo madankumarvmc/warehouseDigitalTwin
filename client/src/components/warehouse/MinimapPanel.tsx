@@ -107,7 +107,7 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
       </div>
       
       {/* Minimap Canvas */}
-      <div className="relative bg-[hsl(0,0%,7.1%)] rounded border border-gray-600 aspect-square">
+      <div className="relative bg-[hsl(0,0%,15%)] rounded border border-gray-600 aspect-square">
         <Stage
           ref={stageRef}
           width={300}

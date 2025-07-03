@@ -103,7 +103,7 @@ function WarehouseDashboard() {
   }
 
   return (
-    <div className="h-screen bg-[hsl(0,0%,7.1%)] text-[hsl(0,0%,88.2%)] flex overflow-hidden relative">
+    <div className="h-screen bg-[hsl(0,0%,15%)] text-[hsl(0,0%,88.2%)] flex overflow-hidden relative">
       {/* Collapsible Sidebar */}
       <CollapsibleSidebar
         isCollapsed={sidebarCollapsed}
