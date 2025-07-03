@@ -1,5 +1,19 @@
 import { warehouseLayout } from './warehouseLayout';
 
+// Seeded random number generator for consistent trails
+class SeededRandom {
+  private seed: number;
+
+  constructor(seed: number) {
+    this.seed = seed;
+  }
+
+  next(): number {
+    this.seed = (this.seed * 9301 + 49297) % 233280;
+    return this.seed / 233280;
+  }
+}
+
 export interface TrailPoint {
   x: number;
   y: number;
@@ -58,18 +72,22 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   const timeSpan = timeRange * 60 * 1000; // Convert to milliseconds
   const primaryAisle = parseInt(forkliftId.split('-')[1]) % 5; // Assign primary aisle based on ID
   
+  // Create seeded random generator based on resource ID and time range
+  const seed = forkliftId.charCodeAt(forkliftId.length - 1) + timeRange;
+  const random = new SeededRandom(seed);
+  
   // Create more diverse starting locations across warehouse
   const startingZones = [
     ...Object.values(WAREHOUSE_ZONES),
     ...Array.from({length: 5}, (_, i) => {
       const center = getAisleCenter(i);
-      return { x: center.x, y: center.y + (Math.random() - 0.5) * 200, id: `AISLE-${i}` };
+      return { x: center.x, y: center.y + (random.next() - 0.5) * 200, id: `AISLE-${i}` };
     })
   ];
   
   let currentTime = now - timeSpan;
-  let currentLocation = startingZones[Math.floor(Math.random() * startingZones.length)];
-  let isLoaded = Math.random() < 0.3; // 30% chance to start loaded
+  let currentLocation = startingZones[Math.floor(random.next() * startingZones.length)];
+  let isLoaded = random.next() < 0.3; // 30% chance to start loaded
   
   // Start position
   trail.push({
@@ -94,15 +112,15 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
     let nextLocation;
     
     // Determine next destination with varied movement patterns
-    if (Math.random() < 0.6) {
+    if (random.next() < 0.6) {
       // Move within warehouse aisles (60% of time)
-      const targetAisle = Math.random() < 0.7 ? primaryAisle : Math.floor(Math.random() * 5);
+      const targetAisle = random.next() < 0.7 ? primaryAisle : Math.floor(random.next() * 5);
       const aisleData = getRandomCellInAisle(targetAisle);
       nextLocation = { x: aisleData.x, y: aisleData.y, id: aisleData.cellId };
     } else {
       // Move to warehouse zones (40% of time)
       const zones = Object.values(WAREHOUSE_ZONES);
-      nextLocation = zones[Math.floor(Math.random() * zones.length)];
+      nextLocation = zones[Math.floor(random.next() * zones.length)];
     }
     
     // Add the movement point
@@ -116,7 +134,7 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
     });
     
     // Change load status occasionally
-    if (Math.random() < 0.3) {
+    if (random.next() < 0.3) {
       isLoaded = !isLoaded;
     }
     
@@ -132,6 +150,10 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
   const now = Date.now();
   const timeSpan = timeRange * 60 * 1000;
   
+  // Create seeded random generator based on resource ID and time range
+  const seed = boptId.charCodeAt(boptId.length - 1) + timeRange * 2;
+  const random = new SeededRandom(seed);
+  
   // BOPTs start from various horizontal locations
   const startingLocations = [
     WAREHOUSE_ZONES.RECEIVING,
@@ -139,14 +161,14 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
     WAREHOUSE_ZONES.STAGING,
     ...Array.from({length: 8}, (_, i) => {
       const x = 100 + (i * 100);
-      const y = 150 + (Math.random() * 300);
+      const y = 150 + (random.next() * 300);
       return { x, y, id: `CROSS-${i}` };
     })
   ];
   
   let currentTime = now - timeSpan;
-  let currentLocation = startingLocations[Math.floor(Math.random() * startingLocations.length)];
-  let isLoaded = Math.random() < 0.4;
+  let currentLocation = startingLocations[Math.floor(random.next() * startingLocations.length)];
+  let isLoaded = random.next() < 0.4;
   
   // Start position
   trail.push({
@@ -170,13 +192,13 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
     let nextLocation;
     
     // BOPTs move more horizontally across warehouse
-    if (Math.random() < 0.7) {
-      const targetAisle = Math.floor(Math.random() * 5);
+    if (random.next() < 0.7) {
+      const targetAisle = Math.floor(random.next() * 5);
       const aisleData = getRandomCellInAisle(targetAisle);
       nextLocation = { x: aisleData.x, y: aisleData.y, id: aisleData.cellId };
     } else {
       const zones = Object.values(WAREHOUSE_ZONES);
-      nextLocation = zones[Math.floor(Math.random() * zones.length)];
+      nextLocation = zones[Math.floor(random.next() * zones.length)];
     }
     
     trail.push({
@@ -188,7 +210,7 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
       action: 'transit'
     });
     
-    if (Math.random() < 0.4) {
+    if (random.next() < 0.4) {
       isLoaded = !isLoaded;
     }
     
