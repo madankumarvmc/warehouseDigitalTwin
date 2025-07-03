@@ -43,7 +43,7 @@ export function CollapsibleSidebar({
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="w-80 bg-[hsl(0,0%,11.8%)] border-r border-gray-700 flex flex-col h-full"
+            className="w-80 bg-[hsl(0,0%,11.8%)] border-r border-gray-700 flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600"
           >
             {/* Sidebar Header */}
             <div className="p-4 border-b border-gray-700">
@@ -93,10 +93,10 @@ export function CollapsibleSidebar({
             </div>
 
             {/* Export Controls */}
-            <div className="p-4 mt-auto space-y-3">
-              <ExportControls onExport={onExport} />
-              <div className="border-t border-gray-700 pt-3">
-                <h3 className="text-sm font-medium text-[hsl(0,0%,70.2%)] mb-2">Documentation</h3>
+            <div className="p-4 border-b border-gray-700">
+              <h3 className="text-sm font-medium text-[hsl(0,0%,70.2%)] mb-3">Export & Documentation</h3>
+              <div className="space-y-3">
+                <ExportControls onExport={onExport} />
                 <HeatmapLegendPDF onDownload={() => console.log('Heatmap legend downloaded')} />
               </div>
             </div>

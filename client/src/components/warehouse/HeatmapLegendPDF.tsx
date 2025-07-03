@@ -260,7 +260,7 @@ export function HeatmapLegendPDF({ onDownload }: HeatmapLegendPDFProps) {
       onClick={generatePDF}
       variant="outline"
       size="sm"
-      className="flex items-center gap-2 text-[hsl(0,0%,70.2%)] hover:text-[hsl(207,90%,54%)] border-[hsl(0,0%,33.3%)] hover:border-[hsl(207,90%,54%)]"
+      className="w-full flex items-center gap-2 text-[hsl(0,0%,70.2%)] hover:text-[hsl(207,90%,54%)] border-[hsl(0,0%,33.3%)] hover:border-[hsl(207,90%,54%)]"
     >
       <Download className="w-4 h-4" />
       Download Legend
