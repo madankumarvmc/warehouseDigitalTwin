@@ -102,7 +102,7 @@ function WarehouseDashboard() {
   }
 
   return (
-    <div className="h-screen bg-[hsl(0,0%,7.1%)] text-[hsl(0,0%,88.2%)] flex overflow-hidden">
+    <div className="h-screen bg-[hsl(0,0%,7.1%)] text-[hsl(0,0%,88.2%)] flex overflow-hidden relative">
       {/* Collapsible Sidebar */}
       <CollapsibleSidebar
         isCollapsed={sidebarCollapsed}
@@ -118,7 +118,7 @@ function WarehouseDashboard() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-80'}`}>
         {/* Top Navigation Bar */}
         <div className="bg-[hsl(0,0%,11.8%)] border-b border-gray-700 p-4">
           <div className="flex items-center justify-between">

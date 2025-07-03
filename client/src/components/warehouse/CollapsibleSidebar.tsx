@@ -43,7 +43,7 @@ export function CollapsibleSidebar({
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="w-80 bg-[hsl(0,0%,11.8%)] border-r border-gray-700 flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600"
+            className="absolute left-0 top-0 w-80 bg-[hsl(0,0%,11.8%)] border-r border-gray-700 flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 z-20"
           >
             {/* Sidebar Header */}
             <div className="p-4 border-b border-gray-700">
