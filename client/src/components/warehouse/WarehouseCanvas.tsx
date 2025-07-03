@@ -108,31 +108,7 @@ function WarehouseCanvas({
     const elements = [];
     const { cellWidth, cellHeight, aisleWidth } = warehouseLayout;
 
-    // Draw aisles (optimized for current config: 5 aisles, 12 bins, 2 levels)
-    for (let aisle = 0; aisle < warehouseLayout.aisles.length; aisle++) {
-      const aisleX = aisle * (cellWidth * 2 + aisleWidth);
-      const aisleHeight = warehouseLayout.binsPerAisle * cellHeight * warehouseLayout.levels;
-      
-      // Only render aisle if in viewport
-      if (isInViewport(aisleX + cellWidth * 2, 0, aisleWidth, aisleHeight)) {
-        elements.push(
-          <Rect
-            key={`aisle-${aisle}`}
-            x={aisleX + cellWidth * 2}
-            y={0}
-            width={aisleWidth}
-            height={aisleHeight}
-            fill="hsl(0, 0%, 22%)"
-            stroke="hsl(0, 0%, 20%)"
-            strokeWidth={0.1}
-            perfectDrawEnabled={false}
-            listening={false}
-          />
-        );
-      }
-
-
-    }
+    // Aisles are now just empty space between storage bins (no explicit rendering needed)
 
     return elements;
   }, [isInViewport]);
