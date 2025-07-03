@@ -227,19 +227,18 @@ function WarehouseDashboard() {
             />
           )}
         </div>
-        
-        {/* Collapsed Right Sidebar Toggle - floating */}
-        {rightSidebarCollapsed && (
-          <MinimapPanel
-            forklifts={forklifts}
-            activeHeatmap={activeHeatmapType}
-            sidebarCollapsed={sidebarCollapsed}
-            isCollapsed={true}
-            onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
-          />
-        )}
-        </div>
       </div>
+      
+      {/* Collapsed Right Sidebar Toggle - floating */}
+      {rightSidebarCollapsed && (
+        <MinimapPanel
+          forklifts={forklifts}
+          activeHeatmap={activeHeatmapType}
+          sidebarCollapsed={sidebarCollapsed}
+          isCollapsed={true}
+          onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+        />
+      )}
     </div>
   );
 }
