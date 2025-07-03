@@ -87,7 +87,7 @@
 
 @layer utilities {
   .canvas-container {
-    background: radial-gradient(circle at 30% 30%, var(--surface-variant) 0%, var(--surface) 100%);
+    background: hsl(0, 0%, 25%);
   }
   
   .heatmap-volume {
