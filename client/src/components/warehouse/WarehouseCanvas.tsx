@@ -83,58 +83,88 @@ function WarehouseCanvas({
     return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${alpha})`;
   }, []);
 
-  // Render warehouse grid
+  // Helper function to check if element is in viewport
+  const isInViewport = useCallback((x: number, y: number, width: number, height: number) => {
+    const stage = stageRef.current;
+    if (!stage) return true;
+    
+    const scale = stage.scaleX();
+    const stageX = stage.x();
+    const stageY = stage.y();
+    
+    const viewportLeft = -stageX / scale;
+    const viewportTop = -stageY / scale;
+    const viewportRight = viewportLeft + dimensions.width / scale;
+    const viewportBottom = viewportTop + dimensions.height / scale;
+    
+    return !(x + width < viewportLeft || 
+             x > viewportRight || 
+             y + height < viewportTop || 
+             y > viewportBottom);
+  }, [dimensions]);
+
+  // Render warehouse grid with viewport culling
   const renderWarehouseGrid = useCallback(() => {
     const elements = [];
     const { cellWidth, cellHeight, aisleWidth } = warehouseLayout;
 
-    // Draw aisles
-    for (let aisle = 0; aisle < 4; aisle++) {
+    // Draw aisles (optimized for current config: 5 aisles, 12 bins, 2 levels)
+    for (let aisle = 0; aisle < warehouseLayout.aisles.length; aisle++) {
       const aisleX = aisle * (cellWidth * 2 + aisleWidth);
+      const aisleHeight = warehouseLayout.binsPerAisle * cellHeight * warehouseLayout.levels;
       
-      // Aisle path
-      elements.push(
-        <Rect
-          key={`aisle-${aisle}`}
-          x={aisleX + cellWidth * 2}
-          y={0}
-          width={aisleWidth}
-          height={60 * cellHeight}
-          fill="hsl(0, 0%, 10.2%)"
-          stroke="hsl(0, 0%, 20%)"
-          strokeWidth={0.5}
-        />
-      );
+      // Only render aisle if in viewport
+      if (isInViewport(aisleX + cellWidth * 2, 0, aisleWidth, aisleHeight)) {
+        elements.push(
+          <Rect
+            key={`aisle-${aisle}`}
+            x={aisleX + cellWidth * 2}
+            y={0}
+            width={aisleWidth}
+            height={aisleHeight}
+            fill="hsl(0, 0%, 10.2%)"
+            stroke="hsl(0, 0%, 20%)"
+            strokeWidth={0.1}
+            perfectDrawEnabled={false}
+            listening={false}
+          />
+        );
+      }
 
       // Racks on both sides
       for (let side = 0; side < 2; side++) {
         const rackX = aisleX + side * (cellWidth + aisleWidth);
         
-        for (let bin = 0; bin < 60; bin++) {
-          for (let level = 0; level < 3; level++) {
+        for (let bin = 0; bin < warehouseLayout.binsPerAisle; bin++) {
+          for (let level = 0; level < warehouseLayout.levels; level++) {
             const x = rackX;
-            const y = bin * cellHeight + level * cellHeight * 60;
+            const y = bin * cellHeight + level * cellHeight * warehouseLayout.binsPerAisle;
             
-            elements.push(
-              <Rect
-                key={`rack-${aisle}-${side}-${bin}-${level}`}
-                x={x}
-                y={y}
-                width={cellWidth}
-                height={cellHeight}
-                fill="hsl(0, 0%, 17.6%)"
-                stroke="hsl(0, 0%, 33.3%)"
-                strokeWidth={1}
-                opacity={0.8}
-              />
-            );
+            // Only render rack cell if in viewport
+            if (isInViewport(x, y, cellWidth, cellHeight)) {
+              elements.push(
+                <Rect
+                  key={`rack-${aisle}-${side}-${bin}-${level}`}
+                  x={x}
+                  y={y}
+                  width={cellWidth}
+                  height={cellHeight}
+                  fill="hsl(0, 0%, 17.6%)"
+                  stroke="hsl(0, 0%, 33.3%)"
+                  strokeWidth={0.1}
+                  opacity={0.8}
+                  perfectDrawEnabled={false}
+                  listening={false}
+                />
+              );
+            }
           }
         }
       }
     }
 
     return elements;
-  }, []);
+  }, [isInViewport]);
 
   // Render heatmap overlay
   const renderHeatmap = useCallback(() => {
@@ -147,6 +177,9 @@ function WarehouseCanvas({
     heatmapData.forEach(({ cellId, value }) => {
       const cell = warehouseLayout.cells.find(c => c.cellId === cellId);
       if (!cell || value === 0) return;
+
+      // Only render if in viewport
+      if (!isInViewport(cell.x, cell.y, cell.width, cell.height)) return;
 
       // Interpolate between start and end colors based on value
       const alpha = value * opacity;
@@ -213,7 +246,7 @@ function WarehouseCanvas({
         key={`trail-${selectedForklift}`}
         points={trailPoints}
         stroke="hsl(207, 90%, 54%)"
-        strokeWidth={3}
+        strokeWidth={2}
         opacity={0.7}
         dash={[4, 4]}
         lineCap="round"
@@ -282,7 +315,7 @@ function WarehouseCanvas({
     return elements;
   }, [activeLayers.resources, forklifts, selectedForklift, onForkliftSelect]);
 
-  // Handle wheel zoom with optimized performance
+  // Optimized zoom with immediate response and minimal re-renders
   const handleWheel = useCallback((e: any) => {
     e.evt.preventDefault();
     
@@ -292,12 +325,12 @@ function WarehouseCanvas({
     const oldScale = stage.scaleX();
     const pointer = stage.getPointerPosition();
     
-    // Faster zoom increments for better responsiveness
-    const scaleBy = 1.1;
+    // Faster zoom for immediate response
+    const scaleBy = 1.2;
     const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
-    const clampedScale = Math.max(0.1, Math.min(3, newScale));
+    const clampedScale = Math.max(0.1, Math.min(5, newScale));
 
-    // Immediate stage updates for responsive feel
+    // Direct stage updates for immediate response
     stage.scale({ x: clampedScale, y: clampedScale });
     
     const newPos = {
@@ -306,17 +339,7 @@ function WarehouseCanvas({
     };
     
     stage.position(newPos);
-    
-    // Throttled React state updates to avoid excessive re-renders
-    if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
-    zoomTimeoutRef.current = window.setTimeout(() => {
-      setViewport(prev => ({
-        ...prev,
-        zoom: clampedScale,
-        panX: newPos.x,
-        panY: newPos.y,
-      }));
-    }, 50);
+    stage.batchDraw();
   }, []);
 
   // Handle drag
@@ -341,10 +364,13 @@ function WarehouseCanvas({
         scaleY={viewport.zoom}
         x={viewport.panX}
         y={viewport.panY}
+        perfectDrawEnabled={false}
+        listening={true}
       >
         <Layer 
           perfectDrawEnabled={false}
           listening={false}
+          imageSmoothingEnabled={false}
         >
           {renderWarehouseGrid()}
           {renderHeatmap()}
