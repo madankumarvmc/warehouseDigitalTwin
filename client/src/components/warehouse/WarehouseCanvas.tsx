@@ -1,0 +1,361 @@
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Stage, Layer, Rect, Circle, Line, Text } from 'react-konva';
+import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
+import { HeatmapData, ForkliftResource, ViewportState } from '@/lib/warehouse/types';
+import { heatmapColors } from '@/lib/warehouse/heatmapGenerator';
+
+interface WarehouseCanvasProps {
+  heatmapData: HeatmapData[];
+  forklifts: ForkliftResource[];
+  activeLayers: Record<string, boolean>;
+  activeHeatmapType: string;
+  layerOpacity: Record<string, number>;
+  onForkliftSelect: (id: string) => void;
+  selectedForklift: string | null;
+  showTrails: boolean;
+  searchHighlight: string[];
+}
+
+export function WarehouseCanvas({
+  heatmapData,
+  forklifts,
+  activeLayers,
+  activeHeatmapType,
+  layerOpacity,
+  onForkliftSelect,
+  selectedForklift,
+  showTrails,
+  searchHighlight,
+}: WarehouseCanvasProps) {
+  const stageRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [viewport, setViewport] = useState<ViewportState>({
+    zoom: 1,
+    panX: 0,
+    panY: 0,
+  });
+
+  // Handle container resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        setDimensions({ width: clientWidth, height: clientHeight });
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Convert HSL color string to RGB values for Konva
+  const hslToRgb = useCallback((hsl: string, alpha: number = 1) => {
+    const match = hsl.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+    if (!match) return `rgba(25, 118, 210, ${alpha})`;
+    
+    const h = parseInt(match[1]) / 360;
+    const s = parseInt(match[2]) / 100;
+    const l = parseInt(match[3]) / 100;
+
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+
+    return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${alpha})`;
+  }, []);
+
+  // Render warehouse grid
+  const renderWarehouseGrid = useCallback(() => {
+    const elements = [];
+    const { cellWidth, cellHeight, aisleWidth } = warehouseLayout;
+
+    // Draw aisles
+    for (let aisle = 0; aisle < 4; aisle++) {
+      const aisleX = aisle * (cellWidth * 2 + aisleWidth);
+      
+      // Aisle path
+      elements.push(
+        <Rect
+          key={`aisle-${aisle}`}
+          x={aisleX + cellWidth * 2}
+          y={0}
+          width={aisleWidth}
+          height={60 * cellHeight}
+          fill="hsl(0, 0%, 10.2%)"
+          stroke="hsl(0, 0%, 20%)"
+          strokeWidth={0.5}
+        />
+      );
+
+      // Racks on both sides
+      for (let side = 0; side < 2; side++) {
+        const rackX = aisleX + side * (cellWidth + aisleWidth);
+        
+        for (let bin = 0; bin < 60; bin++) {
+          for (let level = 0; level < 3; level++) {
+            const x = rackX;
+            const y = bin * cellHeight + level * cellHeight * 60;
+            
+            elements.push(
+              <Rect
+                key={`rack-${aisle}-${side}-${bin}-${level}`}
+                x={x}
+                y={y}
+                width={cellWidth}
+                height={cellHeight}
+                fill="hsl(0, 0%, 17.6%)"
+                stroke="hsl(0, 0%, 33.3%)"
+                strokeWidth={1}
+                opacity={0.8}
+              />
+            );
+          }
+        }
+      }
+    }
+
+    return elements;
+  }, []);
+
+  // Render heatmap overlay
+  const renderHeatmap = useCallback(() => {
+    if (!activeLayers[activeHeatmapType] || !heatmapData.length) return [];
+
+    const elements = [];
+    const colors = heatmapColors[activeHeatmapType as keyof typeof heatmapColors];
+    const opacity = layerOpacity[activeHeatmapType] || 0.8;
+
+    heatmapData.forEach(({ cellId, value }) => {
+      const cell = warehouseLayout.cells.find(c => c.cellId === cellId);
+      if (!cell || value === 0) return;
+
+      // Interpolate between start and end colors based on value
+      const alpha = value * opacity;
+      const color = value > 0.5 ? 
+        hslToRgb(colors.end, alpha) : 
+        hslToRgb(colors.start, alpha);
+
+      elements.push(
+        <Rect
+          key={`heatmap-${cellId}`}
+          x={cell.x}
+          y={cell.y}
+          width={cell.width}
+          height={cell.height}
+          fill={color}
+        />
+      );
+    });
+
+    return elements;
+  }, [activeLayers, activeHeatmapType, heatmapData, layerOpacity, hslToRgb]);
+
+  // Render search highlights
+  const renderSearchHighlights = useCallback(() => {
+    if (!searchHighlight.length) return [];
+
+    const elements = [];
+    searchHighlight.forEach(cellId => {
+      const cell = warehouseLayout.cells.find(c => c.cellId === cellId);
+      if (!cell) return;
+
+      elements.push(
+        <Rect
+          key={`highlight-${cellId}`}
+          x={cell.x}
+          y={cell.y}
+          width={cell.width}
+          height={cell.height}
+          stroke="hsl(207, 90%, 54%)"
+          strokeWidth={3}
+          fill="hsla(207, 90%, 54%, 0.3)"
+        />
+      );
+    });
+
+    return elements;
+  }, [searchHighlight]);
+
+  // Render forklift trails
+  const renderForkliftTrails = useCallback(() => {
+    if (!showTrails || !selectedForklift) return [];
+
+    const forklift = forklifts.find(f => f.id === selectedForklift);
+    if (!forklift || forklift.trail.length < 2) return [];
+
+    const elements = [];
+    const trailPoints = forklift.trail.flatMap(point => [point.x, point.y]);
+
+    elements.push(
+      <Line
+        key={`trail-${selectedForklift}`}
+        points={trailPoints}
+        stroke="hsl(207, 90%, 54%)"
+        strokeWidth={3}
+        opacity={0.7}
+        dash={[4, 4]}
+        lineCap="round"
+        lineJoin="round"
+      />
+    );
+
+    // Add load status indicators along trail
+    forklift.trail.forEach((point, index) => {
+      if (index % 5 === 0) { // Show every 5th point
+        elements.push(
+          <Circle
+            key={`trail-point-${selectedForklift}-${index}`}
+            x={point.x}
+            y={point.y}
+            radius={2}
+            fill={point.loaded ? 'hsl(122, 39%, 49%)' : 'hsl(4, 90%, 58%)'}
+          />
+        );
+      }
+    });
+
+    return elements;
+  }, [showTrails, selectedForklift, forklifts]);
+
+  // Render forklifts
+  const renderForklifts = useCallback(() => {
+    if (!activeLayers.resources) return [];
+
+    const elements = [];
+    forklifts.forEach(forklift => {
+      const isSelected = selectedForklift === forklift.id;
+      
+      // Forklift body
+      elements.push(
+        <Circle
+          key={`forklift-${forklift.id}`}
+          x={forklift.x}
+          y={forklift.y}
+          radius={isSelected ? 12 : 8}
+          fill={forklift.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(122, 39%, 49%)'}
+          stroke={isSelected ? 'hsl(207, 90%, 54%)' : 'transparent'}
+          strokeWidth={2}
+          onClick={() => onForkliftSelect(forklift.id)}
+          onTap={() => onForkliftSelect(forklift.id)}
+        />
+      );
+
+      // Load indicator
+      if (forklift.loaded) {
+        elements.push(
+          <Rect
+            key={`load-${forklift.id}`}
+            x={forklift.x - 4}
+            y={forklift.y - 12}
+            width={8}
+            height={4}
+            fill="hsl(4, 90%, 58%)"
+          />
+        );
+      }
+
+      // Forklift ID
+      elements.push(
+        <Text
+          key={`id-${forklift.id}`}
+          x={forklift.x}
+          y={forklift.y + 15}
+          text={forklift.id}
+          fontSize={10}
+          fontFamily="Roboto"
+          fill="hsl(0, 0%, 88.2%)"
+          align="center"
+          offsetX={15}
+        />
+      );
+    });
+
+    return elements;
+  }, [activeLayers.resources, forklifts, selectedForklift, onForkliftSelect]);
+
+  // Handle wheel zoom
+  const handleWheel = useCallback((e: any) => {
+    e.evt.preventDefault();
+    
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    
+    const scaleBy = 1.05;
+    const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+    const clampedScale = Math.max(0.1, Math.min(3, newScale));
+
+    setViewport(prev => ({
+      ...prev,
+      zoom: clampedScale,
+    }));
+
+    stage.scale({ x: clampedScale, y: clampedScale });
+    
+    const newPos = {
+      x: pointer.x - ((pointer.x - stage.x()) / oldScale) * clampedScale,
+      y: pointer.y - ((pointer.y - stage.y()) / oldScale) * clampedScale,
+    };
+    
+    stage.position(newPos);
+    setViewport(prev => ({
+      ...prev,
+      panX: newPos.x,
+      panY: newPos.y,
+    }));
+  }, []);
+
+  // Handle drag
+  const handleDragEnd = useCallback((e: any) => {
+    setViewport(prev => ({
+      ...prev,
+      panX: e.target.x(),
+      panY: e.target.y(),
+    }));
+  }, []);
+
+  return (
+    <div ref={containerRef} className="w-full h-full canvas-container">
+      <Stage
+        ref={stageRef}
+        width={dimensions.width}
+        height={dimensions.height}
+        onWheel={handleWheel}
+        draggable
+        onDragEnd={handleDragEnd}
+        scaleX={viewport.zoom}
+        scaleY={viewport.zoom}
+        x={viewport.panX}
+        y={viewport.panY}
+      >
+        <Layer>
+          {renderWarehouseGrid()}
+          {renderHeatmap()}
+          {renderSearchHighlights()}
+          {renderForkliftTrails()}
+          {renderForklifts()}
+        </Layer>
+      </Stage>
+    </div>
+  );
+}
