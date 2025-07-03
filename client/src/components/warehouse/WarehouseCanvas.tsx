@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Stage, Layer, Rect, Circle, Line, Text } from 'react-konva';
+import Konva from 'konva';
 import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
 import { HeatmapData, ForkliftResource, BOPTResource, ViewportState } from '@/lib/warehouse/types';
 import { heatmapColors } from '@/lib/warehouse/heatmapGenerator';
@@ -179,9 +180,9 @@ function WarehouseCanvas({
     return elements;
   }, [searchHighlight]);
 
-  // Render resource trails
+  // Render resource trails with color coding
   const renderResourceTrails = useCallback(() => {
-    if (!showTrails || !selectedResource) return [];
+    if (!selectedResource) return [];
 
     // Find the selected resource in either forklifts or BOPTs
     const allResources = [...forklifts, ...bopts];
@@ -189,26 +190,36 @@ function WarehouseCanvas({
     if (!resource || resource.trail.length < 2) return [];
 
     const elements = [];
-    const trailPoints = resource.trail.flatMap(point => [point.x, point.y]);
 
-    // Simplified trail as single line path for better performance
-    elements.push(
-      <Line
-        key={`trail-${selectedResource}`}
-        points={trailPoints}
-        stroke="hsl(207, 90%, 54%)"
-        strokeWidth={2}
-        opacity={0.7}
-        dash={[4, 4]}
-        lineCap="round"
-        lineJoin="round"
-        perfectDrawEnabled={false}
-        listening={false}
-      />
-    );
+    // Draw trail as connected line segments with load-based coloring
+    for (let i = 0; i < resource.trail.length - 1; i++) {
+      const current = resource.trail[i];
+      const next = resource.trail[i + 1];
+      
+      // Use the load status from the current point to determine color
+      const strokeColor = current.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(0, 0%, 100%)'; // Orange for loaded, White for unloaded
+      
+      elements.push(
+        <Line
+          key={`trail-${resource.id}-${i}`}
+          points={[current.x, current.y, next.x, next.y]}
+          stroke={strokeColor}
+          strokeWidth={3}
+          opacity={0.9}
+          lineCap="round"
+          lineJoin="round"
+          perfectDrawEnabled={false}
+          listening={false}
+          shadowColor="rgba(0, 0, 0, 0.3)"
+          shadowBlur={2}
+          shadowOffsetX={1}
+          shadowOffsetY={1}
+        />
+      );
+    }
 
     return elements;
-  }, [showTrails, selectedResource, forklifts, bopts]);
+  }, [selectedResource, forklifts, bopts]);
 
   // Render forklifts
   const renderForklifts = useCallback(() => {
@@ -217,6 +228,8 @@ function WarehouseCanvas({
     const elements = [];
     forklifts.forEach(forklift => {
       const isSelected = selectedResource === forklift.id;
+      const hasSelection = selectedResource !== null;
+      const opacity = hasSelection && !isSelected ? 0.3 : 1;
       
       // Forklift body (circular)
       elements.push(
@@ -228,6 +241,7 @@ function WarehouseCanvas({
           fill={forklift.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(122, 39%, 49%)'}
           stroke={isSelected ? 'hsl(207, 90%, 54%)' : 'transparent'}
           strokeWidth={2}
+          opacity={opacity}
           onClick={() => onResourceSelect(forklift.id)}
           onTap={() => onResourceSelect(forklift.id)}
         />
@@ -243,6 +257,7 @@ function WarehouseCanvas({
             width={8}
             height={4}
             fill="hsl(4, 90%, 58%)"
+            opacity={opacity}
           />
         );
       }
@@ -259,6 +274,7 @@ function WarehouseCanvas({
           fill="hsl(0, 0%, 88.2%)"
           align="center"
           offsetX={15}
+          opacity={opacity}
         />
       );
     });
@@ -273,6 +289,8 @@ function WarehouseCanvas({
     const elements = [];
     bopts.forEach(bopt => {
       const isSelected = selectedResource === bopt.id;
+      const hasSelection = selectedResource !== null;
+      const opacity = hasSelection && !isSelected ? 0.3 : 1;
       
       // BOPT body (rectangular to distinguish from forklifts)
       elements.push(
@@ -286,6 +304,7 @@ function WarehouseCanvas({
           stroke={isSelected ? 'hsl(207, 90%, 54%)' : 'transparent'}
           strokeWidth={2}
           cornerRadius={2}
+          opacity={opacity}
           onClick={() => onResourceSelect(bopt.id)}
           onTap={() => onResourceSelect(bopt.id)}
         />
@@ -301,6 +320,7 @@ function WarehouseCanvas({
             width={6}
             height={3}
             fill="hsl(4, 90%, 58%)"
+            opacity={opacity}
           />
         );
       }
@@ -317,6 +337,7 @@ function WarehouseCanvas({
           fill="hsl(0, 0%, 88.2%)"
           align="center"
           offsetX={20}
+          opacity={opacity}
         />
       );
     });
@@ -376,14 +397,24 @@ function WarehouseCanvas({
         perfectDrawEnabled={false}
         listening={true}
       >
+        {/* Background Layer - gets dimmed when resource is selected */}
         <Layer 
           perfectDrawEnabled={false}
           listening={false}
           imageSmoothingEnabled={false}
+          opacity={selectedResource ? 0.2 : 1}
         >
           {renderWarehouseGrid()}
           {renderHeatmap()}
           {renderSearchHighlights()}
+        </Layer>
+
+        {/* Resource Layer - always visible */}
+        <Layer 
+          perfectDrawEnabled={false}
+          listening={true}
+          imageSmoothingEnabled={false}
+        >
           {renderResourceTrails()}
           {renderForklifts()}
           {renderBOPTs()}
