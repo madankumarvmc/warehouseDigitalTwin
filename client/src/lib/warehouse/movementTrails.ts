@@ -88,8 +88,8 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   for (let i = 0; i < numMoves; i++) {
     currentTime += movementInterval;
     
-    // Skip points that are beyond the current time range
-    if (currentTime > now - (timeRange * 60 * 1000)) break;
+    // Ensure we don't go past current time
+    if (currentTime > now) break;
     
     let nextLocation;
     
@@ -123,7 +123,7 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
     currentLocation = nextLocation;
   }
   
-  return trail.filter(point => point.timestamp >= (now - timeRange * 60 * 1000));
+  return trail;
 }
 
 // Generate realistic BOPT movement trail (more horizontal, cross-aisle movement)
@@ -165,7 +165,7 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
   for (let i = 0; i < numMoves; i++) {
     currentTime += movementInterval;
     
-    if (currentTime > now - (timeRange * 60 * 1000)) break;
+    if (currentTime > now) break;
     
     let nextLocation;
     
@@ -195,7 +195,7 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
     currentLocation = nextLocation;
   }
   
-  return trail.filter(point => point.timestamp >= (now - timeRange * 60 * 1000));
+  return trail;
 }
 
 // Generate movement trails for all resources
