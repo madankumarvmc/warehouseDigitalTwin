@@ -81,7 +81,7 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
         {/* Collapsed state - floating toggle button */}
         <Button
           onClick={onToggle}
-          className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-[hsl(207,90%,54%)] hover:bg-[hsl(212,78%,46%)] text-white p-3 rounded-l-lg shadow-lg z-30"
+          className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-l-lg shadow-lg z-30"
           title="Show Overview"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -91,15 +91,15 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
   }
 
   return (
-    <div className={`${sidebarCollapsed ? 'w-96' : 'w-80'} bg-[hsl(0,0%,11.8%)] border-l border-gray-700 p-4 transition-all duration-300 relative`}>
+    <div className={`${sidebarCollapsed ? 'w-96' : 'w-80'} bg-card border-l border-border p-4 transition-all duration-300 relative`}>
       {/* Header with collapse button */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-[hsl(0,0%,88.2%)]">Overview</h3>
+        <h3 className="text-sm font-medium text-foreground">Overview</h3>
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggle}
-          className="text-[hsl(0,0%,70.2%)] hover:text-[hsl(207,90%,54%)] hover:bg-[hsl(0,0%,17.6%)]"
+          className="text-muted-foreground hover:text-primary hover:bg-muted"
           title="Hide Overview"
         >
           <ChevronRight className="h-4 w-4" />
@@ -107,7 +107,7 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
       </div>
       
       {/* Minimap Canvas */}
-      <div className="relative bg-[hsl(0,0%,15%)] rounded border border-gray-600 aspect-square">
+      <div className="relative bg-muted rounded border border-border aspect-square">
         <Stage
           ref={stageRef}
           width={300}
@@ -133,8 +133,8 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
 
       {/* Legend */}
       <div className="mt-4">
-        <h4 className="text-xs font-medium mb-2 text-[hsl(0,0%,70.2%)]">Legend</h4>
-        <div className="space-y-1 text-xs text-[hsl(0,0%,88.2%)]">
+        <h4 className="text-xs font-medium mb-2 text-muted-foreground">Legend</h4>
+        <div className="space-y-1 text-xs text-foreground">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-gray-500 rounded" />
             <span>Storage Racks</span>
@@ -156,11 +156,11 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
 
       {/* Live Statistics */}
       <div className="mt-6">
-        <h4 className="text-xs font-medium mb-2 text-[hsl(0,0%,70.2%)]">Live Statistics</h4>
-        <div className="space-y-2 text-xs text-[hsl(0,0%,88.2%)]">
+        <h4 className="text-xs font-medium mb-2 text-muted-foreground">Live Statistics</h4>
+        <div className="space-y-2 text-xs text-foreground">
           <div className="flex justify-between">
             <span>Total Positions:</span>
-            <span className="text-[hsl(207,90%,54%)] font-medium">1,440</span>
+            <span className="text-primary font-medium">1,440</span>
           </div>
           <div className="flex justify-between">
             <span>Occupied:</span>

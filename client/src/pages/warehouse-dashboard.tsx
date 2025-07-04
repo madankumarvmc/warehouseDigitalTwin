@@ -11,7 +11,7 @@ import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
 
 function WarehouseDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(true);
   const [searchHighlight, setSearchHighlight] = useState<string[]>([]);
   const [currentZoom, setCurrentZoom] = useState(100);
   const [currentPosition, setCurrentPosition] = useState({ x: 0, y: 0 });
