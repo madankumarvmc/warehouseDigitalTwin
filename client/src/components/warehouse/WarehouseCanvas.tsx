@@ -566,12 +566,12 @@ function WarehouseCanvas({
         perfectDrawEnabled={false}
         listening={true}
       >
-        {/* Background Layer - gets dimmed when resource is selected */}
+        {/* Background Layer - slightly dimmed when resource is selected for focus */}
         <Layer 
           perfectDrawEnabled={false}
           listening={false}
           imageSmoothingEnabled={false}
-          opacity={selectedResource ? 0.2 : 1}
+          opacity={selectedResource ? 0.7 : 1}
         >
           {renderWarehouseGrid()}
           {renderHeatmap()}

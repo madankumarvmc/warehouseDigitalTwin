@@ -183,10 +183,11 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
   const random = new SeededRandom(seed);
   
   // BOPTs start from various horizontal locations
+  const warehouseZones = getWarehouseZones();
   const startingLocations = [
-    WAREHOUSE_ZONES.RECEIVING,
-    WAREHOUSE_ZONES.SHIPPING,
-    WAREHOUSE_ZONES.STAGING,
+    warehouseZones.RECEIVING,
+    warehouseZones.SHIPPING,
+    warehouseZones.STAGING_1,
     ...Array.from({length: 8}, (_, i) => {
       const x = 100 + (i * 100);
       const y = 150 + (random.next() * 300);
@@ -225,7 +226,7 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
       const aisleData = getRandomCellInAisle(targetAisle);
       nextLocation = { x: aisleData.x, y: aisleData.y, id: aisleData.cellId };
     } else {
-      const zones = Object.values(WAREHOUSE_ZONES);
+      const zones = Object.values(warehouseZones);
       nextLocation = zones[Math.floor(random.next() * zones.length)];
     }
     
