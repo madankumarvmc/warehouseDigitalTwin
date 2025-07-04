@@ -393,8 +393,18 @@ export function generateMovementTrails(timeRange: number): MovementTrail[] {
   return trails;
 }
 
-// Get trail for specific resource with proper warehouse operations logic
+// Get trail for specific resource with stable, deterministic paths
 export function getResourceTrail(resourceId: string, timeRange: number): TrailPoint[] {
+  // Check if we already have a stable trail for this resource and time range
+  const cacheKey = `${resourceId}-${timeRange}`;
+  if (trailStorage[cacheKey]) {
+    return trailStorage[cacheKey].baseTrail;
+  }
+  
+  // Create seeded random generator for consistent results
+  const seed = resourceId.charCodeAt(0) + resourceId.charCodeAt(resourceId.length - 1);
+  const random = new SeededRandom(seed);
+  
   const trail: TrailPoint[] = [];
   const now = Date.now();
   const timeRangeMs = timeRange * 60 * 1000;
@@ -412,11 +422,11 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
     let x: number, y: number, locationId: string;
     
     if (isForklift) {
-      // FORKLIFTS: Move only in RACK areas (aisles A1-A5)
+      // FORKLIFTS: Move only in RACK areas (aisles A1-A5) - DETERMINISTIC
       const aisleIndex = i % 5; // Cycle through 5 aisles
-      const binIndex = Math.floor(Math.random() * 12); // 12 bins per aisle
-      const level = Math.floor(Math.random() * 2) + 1; // L1 or L2
-      const depth = Math.floor(Math.random() * 2) + 1; // D1 or D2
+      const binIndex = Math.floor(random.next() * 12); // Seeded random for consistency
+      const level = Math.floor(random.next() * 2) + 1; // L1 or L2
+      const depth = Math.floor(random.next() * 2) + 1; // D1 or D2
       
       // Aisle positions: A1=x:150, A2=x:250, A3=x:350, A4=x:450, A5=x:550
       x = 150 + (aisleIndex * 100);
@@ -424,11 +434,11 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
       locationId = `A${aisleIndex + 1}-B${binIndex + 1}-L${level}-D${depth}`;
       
     } else if (isBOPT) {
-      // BOPTs: Move between RACKS and STAGING/DOCK areas
+      // BOPTs: Move between RACKS and STAGING/DOCK areas - DETERMINISTIC
       if (i < 6) {
         // First half: Move in racks for picking
-        const aisleIndex = Math.floor(Math.random() * 5);
-        const binIndex = Math.floor(Math.random() * 12);
+        const aisleIndex = Math.floor(random.next() * 5);
+        const binIndex = Math.floor(random.next() * 12);
         x = 150 + (aisleIndex * 100);
         y = 100 + (binIndex * 40);
         locationId = `A${aisleIndex + 1}-B${binIndex + 1}`;
@@ -436,15 +446,15 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
         // Second half: Move to staging/dock areas
         const zones = getWarehouseZones();
         const stagingDockZones = [zones.STAGING_1, zones.STAGING_2, zones.RECEIVING, zones.SHIPPING];
-        const zone = stagingDockZones[i % stagingDockZones.length];
-        x = zone.x + (Math.random() - 0.5) * 30;
-        y = zone.y + (Math.random() - 0.5) * 30;
+        const zone = stagingDockZones[(i - 6) % stagingDockZones.length];
+        x = zone.x + (random.next() - 0.5) * 30;
+        y = zone.y + (random.next() - 0.5) * 30;
         locationId = zone.id;
       }
     } else {
       // Default fallback
-      x = 200 + Math.random() * 400;
-      y = 200 + Math.random() * 300;
+      x = 200 + random.next() * 400;
+      y = 200 + random.next() * 300;
       locationId = `default-${i}`;
     }
     
@@ -458,6 +468,13 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
     });
   }
   
-  console.log('Generated warehouse-appropriate trail:', trail.length, 'points for', resourceId);
+  // Store in cache for consistency
+  trailStorage[cacheKey] = {
+    baseTrail: trail,
+    maxTimeRange: timeRange,
+    lastGenerated: now
+  };
+  
+  console.log('Generated stable trail:', trail.length, 'points for', resourceId);
   return trail;
 }
