@@ -381,35 +381,38 @@ function WarehouseCanvas({
       
       const sequentialNumber = index; // 1, 2, 3, 4... based on path sequence
       
-      // Waypoint circle
+      // Waypoint circle with better visibility
       elements.push(
         <Circle
           key={`waypoint-${selectedResource}-${index}`}
           x={point.x}
           y={point.y}
-          radius={8}
-          fill={point.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(0, 0%, 100%)'}
+          radius={10}
+          fill="hsl(0, 0%, 98%)"
           stroke="hsl(207, 90%, 54%)"
           strokeWidth={2}
-          opacity={0.8}
+          opacity={0.95}
           perfectDrawEnabled={false}
           listening={false}
         />
       );
       
-      // Sequential number label
+      // Sequential number label - perfectly centered
+      const textWidth = sequentialNumber.toString().length * 6; // Approximate text width
       elements.push(
         <Text
           key={`waypoint-number-${selectedResource}-${index}`}
           x={point.x}
-          y={point.y}
+          y={point.y + 1} // Slight vertical adjustment for better centering
           text={sequentialNumber.toString()}
           fontSize={10}
-          fontFamily="Roboto"
+          fontFamily="Arial"
           fontStyle="bold"
-          fill="hsl(0, 0%, 0%)"
+          fill="hsl(220, 90%, 40%)" // Dark blue for better contrast
           align="center"
           verticalAlign="middle"
+          offsetX={textWidth / 2}
+          offsetY={5}
           perfectDrawEnabled={false}
           listening={false}
         />
