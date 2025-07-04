@@ -20,82 +20,84 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
     const trail = getResourceTrail(selectedResource, timeRange);
     if (trail.length === 0) return [];
 
-    // Convert trail points to continuous activity segments with no gaps
-    const segments: ActivitySegment[] = [];
     const now = Date.now();
-    const startTime = now - (timeRange * 60 * 1000);
     const totalTimeSpan = timeRange * 60 * 1000;
+    const startTime = now - totalTimeSpan;
     
-    // Create continuous segments that fill the entire timeline
-    for (let i = 0; i < trail.length - 1; i++) {
-      const current = trail[i];
-      const next = trail[i + 1];
-      
-      // Calculate position and width as percentages - fill gaps
-      const startPercent = ((current.timestamp - startTime) / totalTimeSpan) * 100;
-      const endPercent = ((next.timestamp - startTime) / totalTimeSpan) * 100;
-      const width = Math.max(2, endPercent - startPercent); // Minimum 2% width for solid blocks
-      
+    // Calculate 8-hour work period positioned in center of timeline
+    const workDayDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+    const workStartOffset = Math.max(0, (totalTimeSpan - workDayDuration) / 2);
+    const workStartTime = startTime + workStartOffset;
+    const workEndTime = Math.min(now, workStartTime + workDayDuration);
+    
+    // Calculate work period percentages
+    const workStartPercent = ((workStartTime - startTime) / totalTimeSpan) * 100;
+    const workEndPercent = ((workEndTime - startTime) / totalTimeSpan) * 100;
+    
+    const segments: (ActivitySegment & { isWorkTime?: boolean })[] = [];
+    
+    // Add pre-work white space
+    if (workStartPercent > 0) {
       segments.push({
-        start: Math.max(0, startPercent),
-        width: width,
-        loaded: current.loaded,
-        timestamp: current.timestamp
+        start: 0,
+        width: workStartPercent,
+        loaded: false,
+        timestamp: startTime,
+        isWorkTime: false
       });
     }
     
-    // Add final segment to fill to end if needed
-    if (trail.length > 0) {
-      const lastPoint = trail[trail.length - 1];
-      const lastStartPercent = ((lastPoint.timestamp - startTime) / totalTimeSpan) * 100;
-      
-      if (lastStartPercent < 100) {
+    // Process trail data only within work hours
+    const workTrail = trail.filter(point => 
+      point.timestamp >= workStartTime && point.timestamp <= workEndTime
+    );
+    
+    if (workTrail.length > 0) {
+      // Create activity segments within work hours
+      for (let i = 0; i < workTrail.length - 1; i++) {
+        const current = workTrail[i];
+        const next = workTrail[i + 1];
+        
+        const segmentStartPercent = ((current.timestamp - startTime) / totalTimeSpan) * 100;
+        const segmentEndPercent = ((next.timestamp - startTime) / totalTimeSpan) * 100;
+        const segmentWidth = Math.max(1, segmentEndPercent - segmentStartPercent);
+        
         segments.push({
-          start: lastStartPercent,
-          width: Math.max(2, 100 - lastStartPercent),
+          start: segmentStartPercent,
+          width: segmentWidth,
+          loaded: current.loaded,
+          timestamp: current.timestamp,
+          isWorkTime: true
+        });
+      }
+      
+      // Add final work segment if needed
+      const lastPoint = workTrail[workTrail.length - 1];
+      const lastSegmentStart = ((lastPoint.timestamp - startTime) / totalTimeSpan) * 100;
+      
+      if (lastSegmentStart < workEndPercent) {
+        segments.push({
+          start: lastSegmentStart,
+          width: workEndPercent - lastSegmentStart,
           loaded: lastPoint.loaded,
-          timestamp: lastPoint.timestamp
+          timestamp: lastPoint.timestamp,
+          isWorkTime: true
         });
       }
     }
     
-    // Sort and fill gaps to create truly continuous timeline
-    const filledSegments: ActivitySegment[] = [];
-    segments.sort((a, b) => a.start - b.start);
-    
-    let currentPosition = 0;
-    for (let i = 0; i < segments.length; i++) {
-      const segment = segments[i];
-      
-      // Fill gap if there's space before this segment
-      if (currentPosition < segment.start) {
-        const prevSegment = filledSegments[filledSegments.length - 1];
-        const gapWidth = segment.start - currentPosition;
-        filledSegments.push({
-          start: currentPosition,
-          width: gapWidth,
-          loaded: prevSegment ? prevSegment.loaded : false, // Continue previous state
-          timestamp: segment.timestamp
-        });
-      }
-      
-      // Add the actual segment
-      filledSegments.push(segment);
-      currentPosition = segment.start + segment.width;
-    }
-    
-    // Fill remaining space to 100%
-    if (currentPosition < 100 && filledSegments.length > 0) {
-      const lastSegment = filledSegments[filledSegments.length - 1];
-      filledSegments.push({
-        start: currentPosition,
-        width: 100 - currentPosition,
-        loaded: lastSegment.loaded,
-        timestamp: lastSegment.timestamp
+    // Add post-work white space
+    if (workEndPercent < 100) {
+      segments.push({
+        start: workEndPercent,
+        width: 100 - workEndPercent,
+        loaded: false,
+        timestamp: workEndTime,
+        isWorkTime: false
       });
     }
     
-    return filledSegments;
+    return segments;
   }, [selectedResource, timeRange]);
 
   const generateTimeLabels = () => {
@@ -124,7 +126,7 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
   const timeLabels = generateTimeLabels();
 
   return (
-    <div className="w-full px-4 py-2 bg-card border-t border-border min-h-[80px] shadow-sm">
+    <div className="w-full px-4 py-2 bg-card border-t border-border min-h-[80px] shadow-sm relative z-20">
       <div className="mb-2">
         <h3 className="text-sm font-medium text-foreground mb-1 flex items-center gap-2">
           Activity Timeline - {selectedResource}
@@ -145,11 +147,17 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
               style={{
                 left: `${segment.start}%`,
                 width: `${segment.width}%`,
-                backgroundColor: segment.loaded 
-                  ? '#16a34a' // Green for loaded movement
-                  : '#ea580c' // Orange for empty movement
+                backgroundColor: (segment as any).isWorkTime === false
+                  ? '#ffffff' // White for non-work hours
+                  : segment.loaded 
+                    ? '#16a34a' // Green for loaded movement
+                    : '#ea580c' // Orange for empty movement
               }}
-              title={`${segment.loaded ? 'With Load' : 'Empty Movement'} - ${new Date(segment.timestamp).toLocaleTimeString()}`}
+              title={
+                (segment as any).isWorkTime === false 
+                  ? 'Non-Work Hours' 
+                  : `${segment.loaded ? 'With Load' : 'Empty Movement'} - ${new Date(segment.timestamp).toLocaleTimeString()}`
+              }
             />
           ))}
         </div>
@@ -176,6 +184,10 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
           <div className="flex items-center gap-1">
             <div className="w-2.5 h-2.5 bg-orange-500 dark:bg-orange-400 rounded-sm"></div>
             <span className="text-muted-foreground">Empty Movement</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 bg-white border border-border rounded-sm"></div>
+            <span className="text-muted-foreground">Non-Work Hours</span>
           </div>
         </div>
       </div>

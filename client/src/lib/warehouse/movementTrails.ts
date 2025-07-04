@@ -41,6 +41,9 @@ interface PersistentTrailData {
 
 const trailStorage: PersistentTrailData = {};
 
+// Clear existing trails to regenerate with new work hours logic
+Object.keys(trailStorage).forEach(key => delete trailStorage[key]);
+
 // Define key warehouse locations for realistic movement using actual dock and staging positions
 function getWarehouseZones() {
   const dockDoors = warehouseLayout.dockDoorPositions;
@@ -161,13 +164,34 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   
   // Generate points for the full time range requested
   const totalTimeSpan = timeRange * 60 * 1000;
-  const movementInterval = Math.max(30000, (totalTimeSpan / 25));
-  const targetTime = now;
+  
+  // Define 8-hour work period within the time range
+  const workDayDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  const workStartOffset = Math.max(0, (totalTimeSpan - workDayDuration) / 2);
+  const workStartTime = (now - totalTimeSpan) + workStartOffset;
+  const workEndTime = Math.min(now, workStartTime + workDayDuration);
+  
+  // Only generate movements during work hours
+  if (currentTime < workStartTime) {
+    currentTime = workStartTime;
+  }
+  
+  const targetTime = Math.min(now, workEndTime);
   
   while (currentTime < targetTime) {
-    currentTime += movementInterval;
+    // Realistic movement timing based on load status
+    let movementDuration: number;
+    if (isLoaded) {
+      // Movement with load: 1-12 minutes (slower, more careful)
+      movementDuration = (1 + random.next() * 11) * 60 * 1000;
+    } else {
+      // Movement without load: 2-15 minutes (faster but can include longer travels)
+      movementDuration = (2 + random.next() * 13) * 60 * 1000;
+    }
     
-    if (currentTime > now) break;
+    currentTime += movementDuration;
+    
+    if (currentTime > targetTime) break;
     
     let nextLocation;
     
@@ -190,7 +214,8 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
       action: 'transit'
     });
     
-    if (random.next() < 0.3) {
+    // Toggle load state occasionally to create realistic pickup/dropoff patterns
+    if (random.next() < 0.4) {
       isLoaded = !isLoaded;
     }
     
@@ -269,13 +294,34 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
   
   // Generate points for the full time range requested
   const totalTimeSpan = timeRange * 60 * 1000;
-  const movementInterval = Math.max(45000, (totalTimeSpan / 20));
-  const targetTime = now;
+  
+  // Define 8-hour work period within the time range
+  const workDayDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  const workStartOffset = Math.max(0, (totalTimeSpan - workDayDuration) / 2);
+  const workStartTime = (now - totalTimeSpan) + workStartOffset;
+  const workEndTime = Math.min(now, workStartTime + workDayDuration);
+  
+  // Only generate movements during work hours
+  if (currentTime < workStartTime) {
+    currentTime = workStartTime;
+  }
+  
+  const targetTime = Math.min(now, workEndTime);
   
   while (currentTime < targetTime) {
-    currentTime += movementInterval;
+    // Realistic movement timing based on load status
+    let movementDuration: number;
+    if (isLoaded) {
+      // Movement with load: 1-12 minutes (slower, more careful)
+      movementDuration = (1 + random.next() * 11) * 60 * 1000;
+    } else {
+      // Movement without load: 2-15 minutes (faster but can include longer travels)
+      movementDuration = (2 + random.next() * 13) * 60 * 1000;
+    }
     
-    if (currentTime > now) break;
+    currentTime += movementDuration;
+    
+    if (currentTime > targetTime) break;
     
     let nextLocation;
     
