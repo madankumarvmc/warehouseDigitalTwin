@@ -341,7 +341,7 @@ function WarehouseCanvas({
     
     // Get realistic movement trail for the selected resource
     const trail = getResourceTrail(selectedResource, timeRange);
-    console.log('Trail points received:', trail.length);
+    console.log('Trail points received:', trail.length, 'for timeRange:', timeRange, 'minutes');
     
     if (trail.length < 2) {
       console.log('Not enough trail points, returning empty');
@@ -374,18 +374,42 @@ function WarehouseCanvas({
       );
     }
 
-    // Add waypoint markers at each trail point
+    // Add numbered waypoint markers at each trail point with sequential numbering
     trail.forEach((point, index) => {
+      // Skip first point (starting position) from numbering to reduce clutter
+      if (index === 0) return;
+      
+      const sequentialNumber = index; // 1, 2, 3, 4... based on path sequence
+      
+      // Waypoint circle
       elements.push(
         <Circle
           key={`waypoint-${selectedResource}-${index}`}
           x={point.x}
           y={point.y}
-          radius={3}
+          radius={8}
           fill={point.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(0, 0%, 100%)'}
           stroke="hsl(207, 90%, 54%)"
-          strokeWidth={1}
-          opacity={0.7}
+          strokeWidth={2}
+          opacity={0.8}
+          perfectDrawEnabled={false}
+          listening={false}
+        />
+      );
+      
+      // Sequential number label
+      elements.push(
+        <Text
+          key={`waypoint-number-${selectedResource}-${index}`}
+          x={point.x}
+          y={point.y}
+          text={sequentialNumber.toString()}
+          fontSize={10}
+          fontFamily="Roboto"
+          fontStyle="bold"
+          fill="hsl(0, 0%, 0%)"
+          align="center"
+          verticalAlign="middle"
           perfectDrawEnabled={false}
           listening={false}
         />
