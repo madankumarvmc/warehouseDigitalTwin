@@ -123,6 +123,10 @@ function WarehouseDashboard() {
           onTimeRangeChange={updateTimeRange}
           onSKUSearch={handleSKUSearch}
           onExport={handleExport}
+          forklifts={forklifts}
+          bopts={bopts}
+          selectedResource={selectedResource}
+          onResourceSelect={selectResource}
         />
 
         {/* Main Content Area */}
