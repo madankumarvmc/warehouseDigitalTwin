@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import WarehouseCanvas from '@/components/warehouse/WarehouseCanvas';
 import { CollapsibleSidebar } from '@/components/warehouse/CollapsibleSidebar';
 import { MinimapPanel } from '@/components/warehouse/MinimapPanel';
+import { TimelineView } from '@/components/warehouse/TimelineView';
 import { Header } from '@/components/warehouse/Header';
 import { useWarehouseData } from '@/hooks/useWarehouseData';
 import { useResourceTracking } from '@/hooks/useResourceTracking';
@@ -161,88 +162,82 @@ function WarehouseDashboard() {
         />
 
         {/* Main Content Area */}
-        <div className={`flex-1 flex transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-80'}`}>
-          {/* Main Canvas Area */}
-          <div className="flex-1 relative">
-            <WarehouseCanvas
-              heatmapData={heatmapViewVisible ? heatmapData : []}
-              forklifts={liveResourcesViewVisible ? forklifts : []}
-              bopts={liveResourcesViewVisible ? bopts : []}
-              activeLayers={activeLayers}
-              activeHeatmapType={activeHeatmapType}
-              layerOpacity={layerOpacity}
-              onResourceSelect={selectResource}
-              selectedResource={selectedResource}
-              showTrails={liveResourcesViewVisible ? showTrails : false}
-              searchHighlight={searchHighlight}
-              timeRange={timeRange}
-              heatmapViewMode={heatmapViewVisible}
-              liveResourcesViewMode={liveResourcesViewVisible}
-            />
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-80'}`}>
+          <div className="flex-1 flex">
+            {/* Main Canvas Area */}
+            <div className="flex-1 relative">
+              <WarehouseCanvas
+                heatmapData={heatmapViewVisible ? heatmapData : []}
+                forklifts={liveResourcesViewVisible ? forklifts : []}
+                bopts={liveResourcesViewVisible ? bopts : []}
+                activeLayers={activeLayers}
+                activeHeatmapType={activeHeatmapType}
+                layerOpacity={layerOpacity}
+                onResourceSelect={selectResource}
+                selectedResource={selectedResource}
+                showTrails={liveResourcesViewVisible ? showTrails : false}
+                searchHighlight={searchHighlight}
+                timeRange={timeRange}
+                heatmapViewMode={heatmapViewVisible}
+                liveResourcesViewMode={liveResourcesViewVisible}
+              />
 
-            {/* Status Indicators */}
-            <div className="absolute top-4 left-4 space-y-2">
-              <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-[hsl(207,90%,54%)]" />
-                  <span>X: <span className="text-[hsl(122,39%,49%)]">{currentPosition.x}</span>, Y: <span className="text-[hsl(122,39%,49%)]">{currentPosition.y}</span></span>
+              {/* Status Indicators */}
+              <div className="absolute top-4 left-4 space-y-2">
+                <div className="bg-card bg-opacity-90 rounded px-3 py-2 text-sm border border-border">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <span className="text-foreground">X: <span className="text-green-500">{currentPosition.x}</span>, Y: <span className="text-green-500">{currentPosition.y}</span></span>
+                  </div>
+                </div>
+                <div className="bg-card bg-opacity-90 rounded px-3 py-2 text-sm border border-border">
+                  <div className="flex items-center space-x-2">
+                    <ZoomIn className="h-4 w-4 text-primary" />
+                    <span className="text-foreground">Zoom: <span className="text-green-500">{currentZoom}%</span></span>
+                  </div>
                 </div>
               </div>
-              <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <ZoomIn className="h-4 w-4 text-[hsl(207,90%,54%)]" />
-                  <span>Zoom: <span className="text-[hsl(122,39%,49%)]">{currentZoom}%</span></span>
-                </div>
+
+              {/* Canvas Controls Overlay */}
+              <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
+                <Button
+                  className="bg-card hover:bg-muted text-foreground p-3 rounded-full shadow-lg border border-border"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button
+                  className="bg-card hover:bg-muted text-foreground p-3 rounded-full shadow-lg border border-border"
+                  title="Zoom Out"
+                >
+                  <ZoomIn className="h-4 w-4 rotate-180" />
+                </Button>
+                <Button
+                  className="bg-card hover:bg-muted text-foreground p-3 rounded-full shadow-lg border border-border"
+                  title="Reset View"
+                >
+                  <Activity className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
-            {/* Canvas Controls Overlay */}
-            <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
-              <Button
-                className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
-                title="Zoom In"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button
-                className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
-                title="Zoom Out"
-              >
-                <ZoomIn className="h-4 w-4 rotate-180" />
-              </Button>
-              <Button
-                className="bg-[hsl(0,0%,17.6%)] hover:bg-gray-600 text-[hsl(0,0%,88.2%)] p-3 rounded-full shadow-lg"
-                title="Reset View"
-              >
-                <Activity className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Status Indicators */}
-            <div className="absolute top-4 left-4 space-y-2">
-              <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-[hsl(207,90%,54%)]" />
-                  <span>X: <span className="text-[hsl(122,39%,49%)]">{currentPosition.x}</span>, Y: <span className="text-[hsl(122,39%,49%)]">{currentPosition.y}</span></span>
-                </div>
-              </div>
-              <div className="bg-[hsl(0,0%,17.6%)] bg-opacity-90 rounded px-3 py-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <ZoomIn className="h-4 w-4 text-[hsl(207,90%,54%)]" />
-                  <span>Zoom: <span className="text-[hsl(122,39%,49%)]">{currentZoom}%</span></span>
-                </div>
-              </div>
-            </div>
+            {/* Minimap Panel */}
+            {!rightSidebarCollapsed && (
+              <MinimapPanel
+                forklifts={forklifts}
+                activeHeatmap={activeHeatmapType}
+                sidebarCollapsed={sidebarCollapsed}
+                isCollapsed={false}
+                onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+              />
+            )}
           </div>
 
-          {/* Minimap Panel */}
-          {!rightSidebarCollapsed && (
-            <MinimapPanel
-              forklifts={forklifts}
-              activeHeatmap={activeHeatmapType}
-              sidebarCollapsed={sidebarCollapsed}
-              isCollapsed={false}
-              onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+          {/* Timeline View - Show when Live Resources view is selected with a resource */}
+          {liveResourcesViewVisible && selectedResource && (
+            <TimelineView 
+              selectedResource={selectedResource} 
+              timeRange={timeRange} 
             />
           )}
         </div>

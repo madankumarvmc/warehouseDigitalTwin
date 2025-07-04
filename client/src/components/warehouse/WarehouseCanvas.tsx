@@ -356,9 +356,9 @@ function WarehouseCanvas({
       const next = trail[i + 1];
       
       // Use the load status from the current point to determine color
-      const strokeColor = current.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(0, 0%, 100%)'; // Orange for loaded, White for unloaded
+      const strokeColor = current.loaded ? 'hsl(120, 100%, 25%)' : 'hsl(39, 100%, 50%)'; // Dark green for loaded, Orange for empty
       
-      // Create straight line connection
+      // Create dashed line connection
       elements.push(
         <Line
           key={`trail-${selectedResource}-${i}`}
@@ -367,6 +367,7 @@ function WarehouseCanvas({
           strokeWidth={2}
           opacity={0.8}
           lineCap="round"
+          dash={[8, 4]} // Dashed line pattern
           perfectDrawEnabled={false}
           listening={false}
         />
