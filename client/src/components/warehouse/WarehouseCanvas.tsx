@@ -18,6 +18,8 @@ interface WarehouseCanvasProps {
   showTrails: boolean;
   searchHighlight: string[];
   timeRange: number;
+  heatmapViewMode?: boolean;
+  liveResourcesViewMode?: boolean;
 }
 
 function WarehouseCanvas({
@@ -32,6 +34,8 @@ function WarehouseCanvas({
   showTrails,
   searchHighlight,
   timeRange,
+  heatmapViewMode = true,
+  liveResourcesViewMode = false,
 }: WarehouseCanvasProps) {
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);

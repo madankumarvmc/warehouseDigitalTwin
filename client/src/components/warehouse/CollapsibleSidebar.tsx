@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Truck, Package, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Truck, Package, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import { LayerControls } from './LayerControls';
@@ -26,6 +26,10 @@ interface CollapsibleSidebarProps {
   bopts: BOPTResource[];
   selectedResource: string | null;
   onResourceSelect: (resourceId: string | null) => void;
+  heatmapViewVisible: boolean;
+  liveResourcesViewVisible: boolean;
+  onHeatmapViewToggle: () => void;
+  onLiveResourcesViewToggle: () => void;
 }
 
 export function CollapsibleSidebar({
@@ -43,6 +47,10 @@ export function CollapsibleSidebar({
   bopts,
   selectedResource,
   onResourceSelect,
+  heatmapViewVisible,
+  liveResourcesViewVisible,
+  onHeatmapViewToggle,
+  onLiveResourcesViewToggle,
 }: CollapsibleSidebarProps) {
   return (
     <>
@@ -71,14 +79,29 @@ export function CollapsibleSidebar({
               <p className="text-sm text-[hsl(0,0%,70.2%)] mt-1">Operational & Inventory Visibility</p>
             </div>
 
-            {/* Layer Controls */}
+            {/* Heatmap Layers */}
             <div className="p-4 border-b border-gray-700">
-              <LayerControls
-                activeLayers={activeLayers}
-                layerOpacity={layerOpacity}
-                onLayerToggle={onLayerToggle}
-                onOpacityChange={onOpacityChange}
-              />
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-[hsl(0,0%,88.2%)]">Heatmap Layers</h3>
+                <button
+                  onClick={onHeatmapViewToggle}
+                  className="p-1 rounded hover:bg-[hsl(0,0%,20%)] transition-colors"
+                >
+                  {heatmapViewVisible ? (
+                    <Eye className="w-4 h-4 text-blue-400" />
+                  ) : (
+                    <EyeOff className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+              </div>
+              {heatmapViewVisible && (
+                <LayerControls
+                  activeLayers={activeLayers}
+                  layerOpacity={layerOpacity}
+                  onLayerToggle={onLayerToggle}
+                  onOpacityChange={onOpacityChange}
+                />
+              )}
             </div>
 
             {/* Time Range Controls */}
@@ -91,8 +114,22 @@ export function CollapsibleSidebar({
 
             {/* Live Resources */}
             <div className="p-4 border-b border-gray-700">
-              <h3 className="text-sm font-medium text-[hsl(0,0%,70.2%)] mb-3">Live Resources</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-[hsl(0,0%,88.2%)]">Live Resources</h3>
+                <button
+                  onClick={onLiveResourcesViewToggle}
+                  className="p-1 rounded hover:bg-[hsl(0,0%,20%)] transition-colors"
+                >
+                  {liveResourcesViewVisible ? (
+                    <Eye className="w-4 h-4 text-blue-400" />
+                  ) : (
+                    <EyeOff className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+              </div>
               
+              {liveResourcesViewVisible && (
+                <>
               {/* Forklifts Section */}
               <div className="mb-4 p-3 bg-[hsl(0,0%,8%)] rounded-lg border border-gray-700">
                 <div className="flex items-center justify-between mb-2">
@@ -161,6 +198,8 @@ export function CollapsibleSidebar({
                 >
                   Clear Selection
                 </Button>
+              )}
+                </>
               )}
             </div>
 

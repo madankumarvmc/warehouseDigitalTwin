@@ -15,6 +15,27 @@ function WarehouseDashboard() {
   const [searchHighlight, setSearchHighlight] = useState<string[]>([]);
   const [currentZoom, setCurrentZoom] = useState(100);
   const [currentPosition, setCurrentPosition] = useState({ x: 0, y: 0 });
+  
+  // View mode state - default is heatmap view only
+  const [heatmapViewVisible, setHeatmapViewVisible] = useState(true);
+  const [liveResourcesViewVisible, setLiveResourcesViewVisible] = useState(false);
+  
+  // View mode toggle handlers
+  const handleHeatmapViewToggle = useCallback(() => {
+    setHeatmapViewVisible(!heatmapViewVisible);
+    // When toggling heatmap off, turn on live resources if both are off
+    if (heatmapViewVisible && !liveResourcesViewVisible) {
+      setLiveResourcesViewVisible(true);
+    }
+  }, [heatmapViewVisible, liveResourcesViewVisible]);
+  
+  const handleLiveResourcesViewToggle = useCallback(() => {
+    setLiveResourcesViewVisible(!liveResourcesViewVisible);
+    // When toggling live resources off, turn on heatmap if both are off
+    if (liveResourcesViewVisible && !heatmapViewVisible) {
+      setHeatmapViewVisible(true);
+    }
+  }, [heatmapViewVisible, liveResourcesViewVisible]);
 
   const {
     activeLayers,
@@ -127,6 +148,10 @@ function WarehouseDashboard() {
           bopts={bopts}
           selectedResource={selectedResource}
           onResourceSelect={selectResource}
+          heatmapViewVisible={heatmapViewVisible}
+          liveResourcesViewVisible={liveResourcesViewVisible}
+          onHeatmapViewToggle={handleHeatmapViewToggle}
+          onLiveResourcesViewToggle={handleLiveResourcesViewToggle}
         />
 
         {/* Main Content Area */}
@@ -134,17 +159,19 @@ function WarehouseDashboard() {
           {/* Main Canvas Area */}
           <div className="flex-1 relative">
             <WarehouseCanvas
-              heatmapData={heatmapData}
-              forklifts={forklifts}
-              bopts={bopts}
+              heatmapData={heatmapViewVisible ? heatmapData : []}
+              forklifts={liveResourcesViewVisible ? forklifts : []}
+              bopts={liveResourcesViewVisible ? bopts : []}
               activeLayers={activeLayers}
               activeHeatmapType={activeHeatmapType}
               layerOpacity={layerOpacity}
               onResourceSelect={selectResource}
               selectedResource={selectedResource}
-              showTrails={showTrails}
+              showTrails={liveResourcesViewVisible ? showTrails : false}
               searchHighlight={searchHighlight}
               timeRange={timeRange}
+              heatmapViewMode={heatmapViewVisible}
+              liveResourcesViewMode={liveResourcesViewVisible}
             />
 
             {/* Status Indicators */}
