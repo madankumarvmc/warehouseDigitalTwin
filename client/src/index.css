@@ -25,17 +25,17 @@
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
 
-  /* Warehouse-specific colors */
-  --surface: hsl(0, 0%, 18%);
-  --surface-variant: hsl(0, 0%, 11.8%);
-  --surface-elevated: hsl(0, 0%, 17.6%);
+  /* Warehouse-specific colors - Light mode defaults */
+  --surface: hsl(0, 0%, 98%);
+  --surface-variant: hsl(0, 0%, 95%);
+  --surface-elevated: hsl(0, 0%, 100%);
   --primary-variant: hsl(212, 78%, 46%);
   --secondary-warehouse: hsl(174, 97%, 39%);
   --error: hsl(349, 51%, 64%);
   --warning: hsl(39, 100%, 50%);
   --success: hsl(122, 39%, 49%);
-  --on-surface: hsl(0, 0%, 88.2%);
-  --on-surface-variant: hsl(0, 0%, 70.2%);
+  --on-surface: hsl(0, 0%, 15%);
+  --on-surface-variant: hsl(0, 0%, 45%);
   
   /* Heatmap gradients */
   --heatmap-volume-start: hsl(207, 90%, 54%);
@@ -74,21 +74,12 @@
   --ring: hsl(0, 4.9%, 83.9%);
   --radius: 0.5rem;
 
-  /* Light mode warehouse colors */
-  --surface-light: hsl(0, 0%, 98%);
-  --surface-variant-light: hsl(0, 0%, 95%);
-  --surface-elevated-light: hsl(0, 0%, 100%);
-  --on-surface-light: hsl(0, 0%, 15%);
-  --on-surface-variant-light: hsl(0, 0%, 45%);
-}
-
-.light {
-  /* Override warehouse-specific colors for light mode */
-  --surface: hsl(0, 0%, 98%);
-  --surface-variant: hsl(0, 0%, 95%);
-  --surface-elevated: hsl(0, 0%, 100%);
-  --on-surface: hsl(0, 0%, 15%);
-  --on-surface-variant: hsl(0, 0%, 45%);
+  /* Override warehouse-specific colors for dark mode */
+  --surface: hsl(0, 0%, 18%);
+  --surface-variant: hsl(0, 0%, 11.8%);
+  --surface-elevated: hsl(0, 0%, 17.6%);
+  --on-surface: hsl(0, 0%, 88.2%);
+  --on-surface-variant: hsl(0, 0%, 70.2%);
 }
 
 @layer base {

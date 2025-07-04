@@ -42,9 +42,9 @@ export function TimeRangeControls({ timeRange, onTimeRangeChange }: TimeRangeCon
 
   return (
     <div>
-      <h3 className="text-sm font-medium mb-3 text-[hsl(0,0%,88.2%)]">Time Range</h3>
+      <h3 className="text-sm font-medium mb-3 text-foreground">Time Range</h3>
       <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs text-[hsl(0,0%,70.2%)]">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>15 min</span>
           <span>24 hours</span>
         </div>
@@ -57,7 +57,7 @@ export function TimeRangeControls({ timeRange, onTimeRangeChange }: TimeRangeCon
           className="w-full"
         />
         <div className="text-center">
-          <span className="text-sm text-[hsl(207,90%,54%)] font-medium">
+          <span className="text-sm text-primary font-medium">
             {getCurrentLabel()}
           </span>
         </div>

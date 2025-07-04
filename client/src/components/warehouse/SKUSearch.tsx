@@ -25,7 +25,7 @@ export function SKUSearch({ onSearch }: SKUSearchProps) {
 
   return (
     <div>
-      <h3 className="text-sm font-medium mb-3 text-[hsl(0,0%,88.2%)]">SKU Search</h3>
+      <h3 className="text-sm font-medium mb-3 text-foreground">SKU Search</h3>
       <div className="relative">
         <Input
           type="text"
@@ -33,18 +33,18 @@ export function SKUSearch({ onSearch }: SKUSearchProps) {
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full bg-[hsl(0,0%,17.6%)] border-gray-600 text-[hsl(0,0%,88.2%)] focus:border-[hsl(207,90%,54%)]"
+          className="w-full bg-background border-border text-foreground focus:border-primary"
         />
         <Button
           variant="ghost"
           size="sm"
           onClick={handleSearch}
-          className="absolute right-2 top-2 text-[hsl(0,0%,70.2%)] hover:text-[hsl(207,90%,54%)] p-1"
+          className="absolute right-2 top-2 text-muted-foreground hover:text-primary p-1"
         >
           <Search className="h-4 w-4" />
         </Button>
       </div>
-      <div className="mt-2 text-xs text-[hsl(0,0%,70.2%)]">
+      <div className="mt-2 text-xs text-muted-foreground">
         Press Enter to search, ESC to clear
       </div>
     </div>

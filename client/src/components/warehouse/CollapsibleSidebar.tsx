@@ -63,33 +63,33 @@ export function CollapsibleSidebar({
             className="absolute left-0 top-12 w-80 bg-card border-r border-border flex flex-col h-[calc(100vh-3rem)] overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground z-20"
           >
             {/* Sidebar Header */}
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-[hsl(207,90%,54%)]">Warehouse Controls</h2>
+                <h2 className="text-lg font-medium text-primary">Warehouse Controls</h2>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onToggle}
-                  className="text-[hsl(0,0%,70.2%)] hover:text-[hsl(207,90%,54%)] hover:bg-[hsl(0,0%,17.6%)]"
+                  className="text-muted-foreground hover:text-primary hover:bg-muted"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-sm text-[hsl(0,0%,70.2%)] mt-1">Operational & Inventory Visibility</p>
+              <p className="text-sm text-muted-foreground mt-1">Operational & Inventory Visibility</p>
             </div>
 
             {/* Heatmap Layers */}
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-[hsl(0,0%,88.2%)]">Heatmap Layers</h3>
+                <h3 className="text-sm font-medium text-foreground">Heatmap Layers</h3>
                 <button
                   onClick={onHeatmapViewToggle}
-                  className="p-1 rounded hover:bg-[hsl(0,0%,20%)] transition-colors"
+                  className="p-1 rounded hover:bg-muted transition-colors"
                 >
                   {heatmapViewVisible ? (
-                    <Eye className="w-4 h-4 text-blue-400" />
+                    <Eye className="w-4 h-4 text-primary" />
                   ) : (
-                    <EyeOff className="w-4 h-4 text-gray-500" />
+                    <EyeOff className="w-4 h-4 text-muted-foreground" />
                   )}
                 </button>
               </div>
@@ -104,7 +104,7 @@ export function CollapsibleSidebar({
             </div>
 
             {/* Time Range Controls */}
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b border-border">
               <TimeRangeControls
                 timeRange={timeRange}
                 onTimeRangeChange={onTimeRangeChange}
@@ -112,37 +112,37 @@ export function CollapsibleSidebar({
             </div>
 
             {/* Live Resources */}
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-[hsl(0,0%,88.2%)]">Live Resources</h3>
+                <h3 className="text-sm font-medium text-foreground">Live Resources</h3>
                 <button
                   onClick={onLiveResourcesViewToggle}
-                  className="p-1 rounded hover:bg-[hsl(0,0%,20%)] transition-colors"
+                  className="p-1 rounded hover:bg-muted transition-colors"
                 >
                   {liveResourcesViewVisible ? (
-                    <Eye className="w-4 h-4 text-blue-400" />
+                    <Eye className="w-4 h-4 text-primary" />
                   ) : (
-                    <EyeOff className="w-4 h-4 text-gray-500" />
+                    <EyeOff className="w-4 h-4 text-muted-foreground" />
                   )}
                 </button>
               </div>
               
               {/* Forklifts Section */}
-              <div className="mb-4 p-3 bg-[hsl(0,0%,8%)] rounded-lg border border-gray-700">
+              <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-orange-400" />
-                    <span className="text-sm text-[hsl(0,0%,88.2%)]">Forklifts</span>
-                    <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                    <span className="text-sm text-foreground">Forklifts</span>
+                    <span className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded-full">
                       {forklifts.length} Active
                     </span>
                   </div>
-                  <Eye className="w-4 h-4 text-blue-400" />
+                  <Eye className="w-4 h-4 text-primary" />
                 </div>
                 <select 
                   value={selectedResource && forklifts.some(f => f.id === selectedResource) ? selectedResource : ""} 
                   onChange={(e) => onResourceSelect(e.target.value || null)}
-                  className="w-full bg-[hsl(0,0%,11.8%)] border border-gray-600 text-[hsl(0,0%,88.2%)] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-background border border-border text-foreground rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Select a forklift to track</option>
                   {forklifts.map((forklift) => (
@@ -157,21 +157,21 @@ export function CollapsibleSidebar({
               </div>
 
               {/* BOPTs Section */}
-              <div className="mb-4 p-3 bg-[hsl(0,0%,8%)] rounded-lg border border-gray-700">
+              <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Package className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm text-[hsl(0,0%,88.2%)]">BOPTs</span>
+                    <span className="text-sm text-foreground">BOPTs</span>
                     <span className="px-2 py-1 bg-purple-500 text-white text-xs rounded-full">
                       {bopts.length} Active
                     </span>
                   </div>
-                  <Eye className="w-4 h-4 text-blue-400" />
+                  <Eye className="w-4 h-4 text-primary" />
                 </div>
                 <select 
                   value={selectedResource && bopts.some(b => b.id === selectedResource) ? selectedResource : ""} 
                   onChange={(e) => onResourceSelect(e.target.value || null)}
-                  className="w-full bg-[hsl(0,0%,11.8%)] border border-gray-600 text-[hsl(0,0%,88.2%)] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-background border border-border text-foreground rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Select a BOPT to track</option>
                   {bopts.map((bopt) => (
@@ -199,13 +199,13 @@ export function CollapsibleSidebar({
             </div>
 
             {/* SKU Search */}
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b border-border">
               <SKUSearch onSearch={onSKUSearch} />
             </div>
 
             {/* Export Controls */}
-            <div className="p-4 border-b border-gray-700">
-              <h3 className="text-sm font-medium text-[hsl(0,0%,70.2%)] mb-3">Export & Documentation</h3>
+            <div className="p-4 border-b border-border">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Export & Documentation</h3>
               <div className="space-y-3">
                 <ExportControls onExport={onExport} />
                 <HeatmapLegendPDF onDownload={() => console.log('Heatmap legend downloaded')} />
@@ -226,7 +226,7 @@ export function CollapsibleSidebar({
           >
             <Button
               onClick={onToggle}
-              className="bg-[hsl(207,90%,54%)] hover:bg-[hsl(212,78%,46%)] text-white p-3 rounded-full shadow-lg"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-full shadow-lg"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

@@ -31,11 +31,11 @@ export function LayerControls({
         {heatmapLayers.map(layer => (
           <div
             key={layer.key}
-            className="flex items-center justify-between p-2 bg-[hsl(0,0%,17.6%)] rounded"
+            className="flex items-center justify-between p-2 bg-muted rounded"
           >
             <div className="flex items-center space-x-3">
               <div className={`w-4 h-4 ${layer.gradient} rounded`} />
-              <span className="text-sm text-[hsl(0,0%,88.2%)]">{layer.name}</span>
+              <span className="text-sm text-foreground">{layer.name}</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-12">
@@ -53,8 +53,8 @@ export function LayerControls({
                 onClick={() => onLayerToggle(layer.key)}
                 className={`p-1 ${
                   activeLayers[layer.key]
-                    ? 'text-[hsl(207,90%,54%)]'
-                    : 'text-[hsl(0,0%,70.2%)]'
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
                 }`}
               >
                 {activeLayers[layer.key] ? (
