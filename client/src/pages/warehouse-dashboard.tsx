@@ -23,6 +23,7 @@ function WarehouseDashboard() {
   
   // View mode toggle handlers - only one can be active at a time, both can be off
   const handleHeatmapViewToggle = useCallback(() => {
+    console.log('Heatmap toggle clicked, current state:', heatmapViewVisible);
     if (!heatmapViewVisible) {
       // Turning heatmap on - turn off live resources
       setHeatmapViewVisible(true);
@@ -34,6 +35,7 @@ function WarehouseDashboard() {
   }, [heatmapViewVisible]);
   
   const handleLiveResourcesViewToggle = useCallback(() => {
+    console.log('Live Resources toggle clicked, current state:', liveResourcesViewVisible);
     if (!liveResourcesViewVisible) {
       // Turning live resources on - turn off heatmap
       setLiveResourcesViewVisible(true);

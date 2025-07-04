@@ -24,6 +24,7 @@ export function useResourceTracking() {
   }, []);
 
   const selectResource = useCallback((resourceId: string | null) => {
+    console.log('Resource selection changed to:', resourceId);
     setSelectedResource(resourceId);
     setShowTrails(resourceId !== null);
   }, []);
