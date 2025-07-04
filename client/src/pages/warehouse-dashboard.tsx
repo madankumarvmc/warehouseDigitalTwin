@@ -20,22 +20,28 @@ function WarehouseDashboard() {
   const [heatmapViewVisible, setHeatmapViewVisible] = useState(true);
   const [liveResourcesViewVisible, setLiveResourcesViewVisible] = useState(false);
   
-  // View mode toggle handlers
+  // View mode toggle handlers - only one can be active at a time, both can be off
   const handleHeatmapViewToggle = useCallback(() => {
-    setHeatmapViewVisible(!heatmapViewVisible);
-    // When toggling heatmap off, turn on live resources if both are off
-    if (heatmapViewVisible && !liveResourcesViewVisible) {
-      setLiveResourcesViewVisible(true);
+    if (!heatmapViewVisible) {
+      // Turning heatmap on - turn off live resources
+      setHeatmapViewVisible(true);
+      setLiveResourcesViewVisible(false);
+    } else {
+      // Turning heatmap off
+      setHeatmapViewVisible(false);
     }
-  }, [heatmapViewVisible, liveResourcesViewVisible]);
+  }, [heatmapViewVisible]);
   
   const handleLiveResourcesViewToggle = useCallback(() => {
-    setLiveResourcesViewVisible(!liveResourcesViewVisible);
-    // When toggling live resources off, turn on heatmap if both are off
-    if (liveResourcesViewVisible && !heatmapViewVisible) {
-      setHeatmapViewVisible(true);
+    if (!liveResourcesViewVisible) {
+      // Turning live resources on - turn off heatmap
+      setLiveResourcesViewVisible(true);
+      setHeatmapViewVisible(false);
+    } else {
+      // Turning live resources off
+      setLiveResourcesViewVisible(false);
     }
-  }, [heatmapViewVisible, liveResourcesViewVisible]);
+  }, [liveResourcesViewVisible]);
 
   const {
     activeLayers,

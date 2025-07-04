@@ -27,7 +27,6 @@ export function LayerControls({
 }: LayerControlsProps) {
   return (
     <div>
-      <h3 className="text-sm font-medium mb-3 text-[hsl(0,0%,88.2%)]">Heatmap Layers</h3>
       <div className="space-y-2">
         {heatmapLayers.map(layer => (
           <div
