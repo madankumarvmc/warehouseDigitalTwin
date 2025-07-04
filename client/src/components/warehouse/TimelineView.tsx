@@ -83,24 +83,41 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
       
       {/* Timeline container */}
       <div className="relative">
-        {/* Activity bars */}
-        <div className="relative h-5 bg-muted rounded border border-border overflow-hidden">
-          {activityData.map((segment, index) => (
-            <div
-              key={index}
-              className={`absolute top-0.5 bottom-0.5 rounded-sm ${
-                segment.loaded 
-                  ? 'bg-green-600 dark:bg-green-500' // Green for loaded movement
-                  : 'bg-orange-500 dark:bg-orange-400' // Orange for empty movement
-              }`}
-              style={{
-                left: `${segment.start}%`,
-                width: `${segment.width}%`,
-                minWidth: '2px' // Ensure visibility of very short segments
-              }}
-              title={`${segment.loaded ? 'With Load' : 'Empty'} - ${new Date(segment.timestamp).toLocaleTimeString()}`}
-            />
-          ))}
+        {/* Barcode-style activity visualization */}
+        <div className="relative h-8 bg-muted/30 rounded border border-border overflow-hidden">
+          {activityData.map((segment, index) => {
+            // Create multiple vertical lines within each segment for barcode effect
+            const lineCount = Math.max(1, Math.floor(segment.width / 1.5)); // Dense lines for barcode effect
+            const lines = [];
+            
+            for (let i = 0; i < lineCount; i++) {
+              const linePosition = segment.start + (i * (segment.width / lineCount));
+              // Use deterministic "randomness" based on segment timestamp and position
+              const seed = (segment.timestamp + i) % 1000;
+              const lineWidth = (seed % 3) + 1; // Width 1-3px
+              const isShort = (seed % 5) < 2; // 40% chance of short line
+              const lineHeight = isShort ? '60%' : '100%';
+              
+              lines.push(
+                <div
+                  key={`${index}-${i}`}
+                  className={`absolute ${
+                    segment.loaded 
+                      ? 'bg-green-600 dark:bg-green-400' 
+                      : 'bg-orange-500 dark:bg-orange-400'
+                  }`}
+                  style={{
+                    left: `${linePosition}%`,
+                    width: `${lineWidth}px`,
+                    height: lineHeight,
+                    top: isShort ? '20%' : '0%'
+                  }}
+                />
+              );
+            }
+            
+            return lines;
+          }).flat()}
         </div>
         
         {/* Time scale labels */}
