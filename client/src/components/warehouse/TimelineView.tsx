@@ -20,19 +20,21 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
     const trail = getResourceTrail(selectedResource, timeRange);
     if (trail.length === 0) return [];
 
-    // Convert trail points to activity segments
+    // Convert trail points to continuous activity segments with no gaps
     const segments: ActivitySegment[] = [];
     const now = Date.now();
     const startTime = now - (timeRange * 60 * 1000);
+    const totalTimeSpan = timeRange * 60 * 1000;
     
+    // Create continuous segments that fill the entire timeline
     for (let i = 0; i < trail.length - 1; i++) {
       const current = trail[i];
       const next = trail[i + 1];
       
-      // Calculate position and width as percentages
-      const startPercent = ((current.timestamp - startTime) / (timeRange * 60 * 1000)) * 100;
-      const endPercent = ((next.timestamp - startTime) / (timeRange * 60 * 1000)) * 100;
-      const width = Math.max(0.5, endPercent - startPercent); // Minimum 0.5% width for visibility
+      // Calculate position and width as percentages - fill gaps
+      const startPercent = ((current.timestamp - startTime) / totalTimeSpan) * 100;
+      const endPercent = ((next.timestamp - startTime) / totalTimeSpan) * 100;
+      const width = Math.max(2, endPercent - startPercent); // Minimum 2% width for solid blocks
       
       segments.push({
         start: Math.max(0, startPercent),
@@ -42,7 +44,58 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
       });
     }
     
-    return segments;
+    // Add final segment to fill to end if needed
+    if (trail.length > 0) {
+      const lastPoint = trail[trail.length - 1];
+      const lastStartPercent = ((lastPoint.timestamp - startTime) / totalTimeSpan) * 100;
+      
+      if (lastStartPercent < 100) {
+        segments.push({
+          start: lastStartPercent,
+          width: Math.max(2, 100 - lastStartPercent),
+          loaded: lastPoint.loaded,
+          timestamp: lastPoint.timestamp
+        });
+      }
+    }
+    
+    // Sort and fill gaps to create truly continuous timeline
+    const filledSegments: ActivitySegment[] = [];
+    segments.sort((a, b) => a.start - b.start);
+    
+    let currentPosition = 0;
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      
+      // Fill gap if there's space before this segment
+      if (currentPosition < segment.start) {
+        const prevSegment = filledSegments[filledSegments.length - 1];
+        const gapWidth = segment.start - currentPosition;
+        filledSegments.push({
+          start: currentPosition,
+          width: gapWidth,
+          loaded: prevSegment ? prevSegment.loaded : false, // Continue previous state
+          timestamp: segment.timestamp
+        });
+      }
+      
+      // Add the actual segment
+      filledSegments.push(segment);
+      currentPosition = segment.start + segment.width;
+    }
+    
+    // Fill remaining space to 100%
+    if (currentPosition < 100 && filledSegments.length > 0) {
+      const lastSegment = filledSegments[filledSegments.length - 1];
+      filledSegments.push({
+        start: currentPosition,
+        width: 100 - currentPosition,
+        loaded: lastSegment.loaded,
+        timestamp: lastSegment.timestamp
+      });
+    }
+    
+    return filledSegments;
   }, [selectedResource, timeRange]);
 
   const generateTimeLabels = () => {
@@ -74,7 +127,7 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
     <div className="w-full px-4 py-2 bg-card border-t border-border min-h-[80px] shadow-sm">
       <div className="mb-2">
         <h3 className="text-sm font-medium text-foreground mb-1 flex items-center gap-2">
-          📊 Activity Timeline - {selectedResource}
+          Activity Timeline - {selectedResource}
         </h3>
         <p className="text-xs text-muted-foreground">
           Last {timeRange < 60 ? `${timeRange} minutes` : `${timeRange / 60} hours`} • {activityData.length} activity segments
@@ -83,40 +136,22 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
       
       {/* Timeline container */}
       <div className="relative">
-        {/* Barcode-style activity visualization */}
+        {/* Solid block activity visualization */}
         <div className="relative h-8 bg-muted/30 rounded border border-border overflow-hidden">
-          {activityData.map((segment, index) => {
-            // Create multiple vertical lines within each segment for barcode effect
-            const lineCount = Math.max(1, Math.floor(segment.width / 1.5)); // Dense lines for barcode effect
-            const lines = [];
-            
-            for (let i = 0; i < lineCount; i++) {
-              const linePosition = segment.start + (i * (segment.width / lineCount));
-              // Use deterministic "randomness" based on segment timestamp and position
-              const seed = (segment.timestamp + i) % 1000;
-              const lineWidth = (seed % 3) + 1; // Width 1-3px
-              const isShort = (seed % 5) < 2; // 40% chance of short line
-              const lineHeight = isShort ? '60%' : '100%';
-              
-              lines.push(
-                <div
-                  key={`${index}-${i}`}
-                  className="absolute"
-                  style={{
-                    left: `${linePosition}%`,
-                    width: `${lineWidth}px`,
-                    height: lineHeight,
-                    top: isShort ? '20%' : '0%',
-                    backgroundColor: segment.loaded 
-                      ? '#16a34a' // Green-600 for loaded
-                      : '#ea580c' // Orange-600 for empty
-                  }}
-                />
-              );
-            }
-            
-            return lines;
-          }).flat()}
+          {activityData.map((segment, index) => (
+            <div
+              key={index}
+              className="absolute top-0 bottom-0"
+              style={{
+                left: `${segment.start}%`,
+                width: `${segment.width}%`,
+                backgroundColor: segment.loaded 
+                  ? '#16a34a' // Green for loaded movement
+                  : '#ea580c' // Orange for empty movement
+              }}
+              title={`${segment.loaded ? 'With Load' : 'Empty Movement'} - ${new Date(segment.timestamp).toLocaleTimeString()}`}
+            />
+          ))}
         </div>
         
         {/* Time scale labels */}
