@@ -101,16 +101,15 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
               lines.push(
                 <div
                   key={`${index}-${i}`}
-                  className={`absolute ${
-                    segment.loaded 
-                      ? 'bg-green-600 dark:bg-green-400' 
-                      : 'bg-orange-500 dark:bg-orange-400'
-                  }`}
+                  className="absolute"
                   style={{
                     left: `${linePosition}%`,
                     width: `${lineWidth}px`,
                     height: lineHeight,
-                    top: isShort ? '20%' : '0%'
+                    top: isShort ? '20%' : '0%',
+                    backgroundColor: segment.loaded 
+                      ? '#16a34a' // Green-600 for loaded
+                      : '#ea580c' // Orange-600 for empty
                   }}
                 />
               );
