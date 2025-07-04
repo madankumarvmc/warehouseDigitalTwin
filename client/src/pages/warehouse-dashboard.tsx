@@ -23,7 +23,6 @@ function WarehouseDashboard() {
   
   // View mode toggle handlers - only one can be active at a time, both can be off
   const handleHeatmapViewToggle = useCallback(() => {
-    console.log('Heatmap toggle clicked, current state:', heatmapViewVisible);
     if (!heatmapViewVisible) {
       // Turning heatmap on - turn off live resources
       setHeatmapViewVisible(true);
@@ -35,7 +34,6 @@ function WarehouseDashboard() {
   }, [heatmapViewVisible]);
   
   const handleLiveResourcesViewToggle = useCallback(() => {
-    console.log('Live Resources toggle clicked, current state:', liveResourcesViewVisible);
     if (!liveResourcesViewVisible) {
       // Turning live resources on - turn off heatmap
       setLiveResourcesViewVisible(true);
@@ -235,19 +233,12 @@ function WarehouseDashboard() {
             )}
           </div>
 
-          {/* Timeline View - Show when Live Resources view is selected with a resource */}
-          {liveResourcesViewVisible && selectedResource && (
+          {/* Timeline View - Show when any resource is selected */}
+          {selectedResource && (
             <TimelineView 
               selectedResource={selectedResource} 
               timeRange={timeRange} 
             />
-          )}
-          
-          {/* Debug: Show timeline status */}
-          {liveResourcesViewVisible && (
-            <div className="bg-yellow-100 dark:bg-yellow-900 p-2 text-xs">
-              Debug: Live Resources View: {liveResourcesViewVisible ? 'ON' : 'OFF'}, Selected Resource: {selectedResource || 'NONE'}
-            </div>
           )}
         </div>
 

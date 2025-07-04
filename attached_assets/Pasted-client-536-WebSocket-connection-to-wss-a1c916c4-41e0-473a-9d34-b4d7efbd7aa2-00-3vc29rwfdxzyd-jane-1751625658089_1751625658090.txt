@@ -1,0 +1,39 @@
+client:536 WebSocket connection to 'wss://a1c916c4-41e0-473a-9d34-b4d7efbd7aa2-00-3vc29rwfdxzyd.janeway.replit.dev/?token=x_bz51WBP6EY' failed: 
+setupWebSocket @ client:536
+(anonymous) @ client:531Understand this error
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=x_bz51WBP6EY' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555Understand this error
+chunk-GPWG6C7Y.js?v=b7635fda:21092 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+main.tsx:5 Starting Warehouse Visibility Demo...
+main.tsx:12 Creating React root...
+WarehouseCanvas.tsx:336 No selected resource
+WarehouseCanvas.tsx:336 No selected resource
+warehouse-dashboard.tsx:26 Heatmap toggle clicked, current state: true
+WarehouseCanvas.tsx:336 No selected resource
+3WarehouseCanvas.tsx:336 No selected resource
+useResourceTracking.ts:27 Resource selection changed to: FL-001
+WarehouseCanvas.tsx:340 Rendering trails for: FL-001 timeRange: 120
+movementTrails.ts:287 Requested trail for: FL-001
+movementTrails.ts:288 Available trails: (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+movementTrails.ts:289 Found trail: 21
+WarehouseCanvas.tsx:344 Trail points received: 21
+WarehouseCanvas.tsx:340 Rendering trails for: FL-001 timeRange: 120
+movementTrails.ts:287 Requested trail for: FL-001
+movementTrails.ts:288 Available trails: (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+movementTrails.ts:289 Found trail: 21
+WarehouseCanvas.tsx:344 Trail points received: 21
+WarehouseCanvas.tsx:340 Rendering trails for: FL-001 timeRange: 120
+movementTrails.ts:287 Requested trail for: FL-001
+movementTrails.ts:288 Available trails: (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+movementTrails.ts:289 Found trail: 21
+WarehouseCanvas.tsx:344 Trail points received: 21
+WarehouseCanvas.tsx:340 Rendering trails for: FL-001 timeRange: 120
+movementTrails.ts:287 Requested trail for: FL-001
+movementTrails.ts:288 Available trails: (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+movementTrails.ts:289 Found trail: 21
+WarehouseCanvas.tsx:344 Trail points received: 21
