@@ -62,10 +62,9 @@ export function CollapsibleSidebar({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="absolute left-0 top-12 w-80 bg-card border-r border-border flex flex-col h-[calc(100vh-3rem)] overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground z-20"
           >
-            {/* Sidebar Header */}
+            {/* Sidebar Header - Just collapse button */}
             <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-primary">Warehouse Controls</h2>
+              <div className="flex items-center justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -75,13 +74,108 @@ export function CollapsibleSidebar({
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Operational & Inventory Visibility</p>
             </div>
 
-            {/* Heatmap Layers */}
+            {/* Resource Section - Top Priority */}
             <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-foreground">Heatmap Layers</h3>
+                <h3 className="text-sm font-medium text-foreground">Resource</h3>
+                <button
+                  onClick={onLiveResourcesViewToggle}
+                  className="p-1 rounded hover:bg-muted transition-colors"
+                >
+                  {liveResourcesViewVisible ? (
+                    <Eye className="w-4 h-4 text-primary" />
+                  ) : (
+                    <EyeOff className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+              
+              {liveResourcesViewVisible && (
+                <>
+                  {/* SKU Search inside Resource section */}
+                  <div className="mb-4">
+                    <SKUSearch onSearch={onSKUSearch} />
+                  </div>
+
+                  {/* Forklifts Section */}
+                  <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-orange-400" />
+                        <span className="text-sm text-foreground">Forklifts</span>
+                        <span className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded-full">
+                          {forklifts.length} Active
+                        </span>
+                      </div>
+                      <Eye className="w-4 h-4 text-primary" />
+                    </div>
+                    <select 
+                      value={selectedResource && forklifts.some(f => f.id === selectedResource) ? selectedResource : ""} 
+                      onChange={(e) => onResourceSelect(e.target.value || null)}
+                      className="w-full bg-background border border-border text-foreground rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">Select a forklift to track</option>
+                      {forklifts.map((forklift) => (
+                        <option 
+                          key={forklift.id} 
+                          value={forklift.id}
+                        >
+                          {forklift.id} ({forklift.status} • {forklift.loaded ? 'Loaded' : 'Empty'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* BOPTs Section */}
+                  <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Package className="w-4 h-4 text-purple-400" />
+                        <span className="text-sm text-foreground">BOPTs</span>
+                        <span className="px-2 py-1 bg-purple-500 text-white text-xs rounded-full">
+                          {bopts.length} Active
+                        </span>
+                      </div>
+                      <Eye className="w-4 h-4 text-primary" />
+                    </div>
+                    <select 
+                      value={selectedResource && bopts.some(b => b.id === selectedResource) ? selectedResource : ""} 
+                      onChange={(e) => onResourceSelect(e.target.value || null)}
+                      className="w-full bg-background border border-border text-foreground rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">Select a BOPT to track</option>
+                      {bopts.map((bopt) => (
+                        <option 
+                          key={bopt.id} 
+                          value={bopt.id}
+                        >
+                          {bopt.id} ({bopt.status} • {bopt.loaded ? 'Loaded' : 'Empty'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Clear Selection Button */}
+                  {selectedResource && (
+                    <Button 
+                      onClick={() => onResourceSelect(null)}
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full bg-red-900/20 border-red-600 text-red-400 hover:bg-red-900/30"
+                    >
+                      Clear Selection
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Heatmap Layer - Below Resource */}
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-foreground">Heatmap Layer</h3>
                 <button
                   onClick={onHeatmapViewToggle}
                   className="p-1 rounded hover:bg-muted transition-colors"
@@ -109,98 +203,6 @@ export function CollapsibleSidebar({
                 timeRange={timeRange}
                 onTimeRangeChange={onTimeRangeChange}
               />
-            </div>
-
-            {/* Live Resources */}
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-foreground">Live Resources</h3>
-                <button
-                  onClick={onLiveResourcesViewToggle}
-                  className="p-1 rounded hover:bg-muted transition-colors"
-                >
-                  {liveResourcesViewVisible ? (
-                    <Eye className="w-4 h-4 text-primary" />
-                  ) : (
-                    <EyeOff className="w-4 h-4 text-muted-foreground" />
-                  )}
-                </button>
-              </div>
-              
-              {/* Forklifts Section */}
-              <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-orange-400" />
-                    <span className="text-sm text-foreground">Forklifts</span>
-                    <span className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded-full">
-                      {forklifts.length} Active
-                    </span>
-                  </div>
-                  <Eye className="w-4 h-4 text-primary" />
-                </div>
-                <select 
-                  value={selectedResource && forklifts.some(f => f.id === selectedResource) ? selectedResource : ""} 
-                  onChange={(e) => onResourceSelect(e.target.value || null)}
-                  className="w-full bg-background border border-border text-foreground rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select a forklift to track</option>
-                  {forklifts.map((forklift) => (
-                    <option 
-                      key={forklift.id} 
-                      value={forklift.id}
-                    >
-                      {forklift.id} ({forklift.status} • {forklift.loaded ? 'Loaded' : 'Empty'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* BOPTs Section */}
-              <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Package className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm text-foreground">BOPTs</span>
-                    <span className="px-2 py-1 bg-purple-500 text-white text-xs rounded-full">
-                      {bopts.length} Active
-                    </span>
-                  </div>
-                  <Eye className="w-4 h-4 text-primary" />
-                </div>
-                <select 
-                  value={selectedResource && bopts.some(b => b.id === selectedResource) ? selectedResource : ""} 
-                  onChange={(e) => onResourceSelect(e.target.value || null)}
-                  className="w-full bg-background border border-border text-foreground rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select a BOPT to track</option>
-                  {bopts.map((bopt) => (
-                    <option 
-                      key={bopt.id} 
-                      value={bopt.id}
-                    >
-                      {bopt.id} ({bopt.status} • {bopt.loaded ? 'Loaded' : 'Empty'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Clear Selection Button */}
-              {selectedResource && (
-                <Button 
-                  onClick={() => onResourceSelect(null)}
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full bg-red-900/20 border-red-600 text-red-400 hover:bg-red-900/30"
-                >
-                  Clear Selection
-                </Button>
-              )}
-            </div>
-
-            {/* SKU Search */}
-            <div className="p-4 border-b border-border">
-              <SKUSearch onSearch={onSKUSearch} />
             </div>
 
             {/* Export Controls */}
