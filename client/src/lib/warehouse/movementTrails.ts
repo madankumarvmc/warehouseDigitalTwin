@@ -30,20 +30,47 @@ export interface MovementTrail {
   timeRange: number; // in minutes
 }
 
-// Define key warehouse locations for realistic movement
-const WAREHOUSE_ZONES = {
-  RECEIVING: { x: 50, y: 50, id: 'RECV-01' },
-  SHIPPING: { x: 750, y: 550, id: 'SHIP-01' },
-  STAGING: { x: 400, y: 100, id: 'STAGE-01' },
-  MAINTENANCE: { x: 100, y: 500, id: 'MAINT-01' },
-  OFFICE: { x: 50, y: 250, id: 'OFFICE-01' }
-};
+// Define key warehouse locations for realistic movement using actual dock and staging positions
+function getWarehouseZones() {
+  const dockDoors = warehouseLayout.dockDoorPositions;
+  const stagingAreas = warehouseLayout.stagingAreas;
+  
+  return {
+    // Use actual dock doors for receiving/shipping
+    RECEIVING: dockDoors[0] ? { 
+      x: dockDoors[0].x + dockDoors[0].width / 2, 
+      y: dockDoors[0].y + dockDoors[0].height / 2, 
+      id: dockDoors[0].id 
+    } : { x: 50, y: 50, id: 'RECV-01' },
+    
+    SHIPPING: dockDoors[2] ? { 
+      x: dockDoors[2].x + dockDoors[2].width / 2, 
+      y: dockDoors[2].y + dockDoors[2].height / 2, 
+      id: dockDoors[2].id 
+    } : { x: 50, y: 400, id: 'SHIP-01' },
+    
+    // Use actual staging areas
+    STAGING_1: stagingAreas[0] ? { 
+      x: stagingAreas[0].x + stagingAreas[0].width / 2, 
+      y: stagingAreas[0].y + stagingAreas[0].height / 2, 
+      id: stagingAreas[0].id 
+    } : { x: 100, y: 100, id: 'STAGE-01' },
+    
+    STAGING_2: stagingAreas[1] ? { 
+      x: stagingAreas[1].x + stagingAreas[1].width / 2, 
+      y: stagingAreas[1].y + stagingAreas[1].height / 2, 
+      id: stagingAreas[1].id 
+    } : { x: 100, y: 200, id: 'STAGE-02' },
+    
+    MAINTENANCE: { x: 60, y: 500, id: 'MAINT-01' },
+    OFFICE: { x: 60, y: 250, id: 'OFFICE-01' }
+  };
+}
 
 // Get aisle centers for realistic movement patterns
 function getAisleCenter(aisleIndex: number): { x: number, y: number } {
-  const aisleWidth = warehouseLayout.aisleWidth;
-  const cellWidth = warehouseLayout.cellWidth;
-  const x = aisleIndex * (cellWidth * 2 + aisleWidth) + cellWidth + (aisleWidth / 2);
+  const { aisleWidth, cellWidth, dockOffset } = warehouseLayout;
+  const x = dockOffset + aisleIndex * (cellWidth * 2 + aisleWidth) + cellWidth + (aisleWidth / 2);
   return { x, y: 300 }; // Middle of warehouse height
 }
 
@@ -77,8 +104,9 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   const random = new SeededRandom(seed);
   
   // Create more diverse starting locations across warehouse
+  const warehouseZones = getWarehouseZones();
   const startingZones = [
-    ...Object.values(WAREHOUSE_ZONES),
+    ...Object.values(warehouseZones),
     ...Array.from({length: 5}, (_, i) => {
       const center = getAisleCenter(i);
       return { x: center.x, y: center.y + (random.next() - 0.5) * 200, id: `AISLE-${i}` };
@@ -86,7 +114,7 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   ];
   
   let currentTime = now - timeSpan;
-  let currentLocation = startingZones[Math.floor(random.next() * startingZones.length)];
+  let currentLocation: { x: number; y: number; id: string } = startingZones[Math.floor(random.next() * startingZones.length)];
   let isLoaded = random.next() < 0.3; // 30% chance to start loaded
   
   // Start position
@@ -119,7 +147,7 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
       nextLocation = { x: aisleData.x, y: aisleData.y, id: aisleData.cellId };
     } else {
       // Move to warehouse zones (40% of time)
-      const zones = Object.values(WAREHOUSE_ZONES);
+      const zones = Object.values(warehouseZones);
       nextLocation = zones[Math.floor(random.next() * zones.length)];
     }
     

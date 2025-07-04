@@ -43,6 +43,25 @@ export interface LayerState {
   [key: string]: boolean;
 }
 
+export interface DockDoor {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  status: 'open' | 'closed' | 'occupied';
+}
+
+export interface StagingArea {
+  id: string;
+  dockId: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  occupied: boolean;
+}
+
 export interface WarehouseLayout {
   aisles: string[];
   binsPerAisle: number;
@@ -51,7 +70,15 @@ export interface WarehouseLayout {
   cellWidth: number;
   cellHeight: number;
   aisleWidth: number;
+  dockDoors: number;
+  dockWidth: number;
+  dockHeight: number;
+  stagingWidth: number;
+  stagingHeight: number;
+  dockOffset: number;
   cells: CellPosition[];
+  dockDoorPositions: DockDoor[];
+  stagingAreas: StagingArea[];
 }
 
 export interface ViewportState {

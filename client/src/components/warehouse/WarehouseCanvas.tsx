@@ -109,15 +109,158 @@ function WarehouseCanvas({
              y > viewportBottom);
   }, [dimensions]);
 
-  // Render warehouse grid with viewport culling
+  // Get theme-aware colors
+  const getThemeColors = useCallback(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    return {
+      binOutline: isDark ? '#ffffff' : '#000000',
+      binFill: isDark ? 'hsla(0, 0%, 20%, 0.8)' : 'hsla(0, 0%, 95%, 0.8)',
+      dockDoorOpen: isDark ? 'hsl(122, 39%, 49%)' : 'hsl(122, 39%, 35%)',
+      dockDoorClosed: isDark ? 'hsl(0, 0%, 60%)' : 'hsl(0, 0%, 40%)',
+      dockDoorOccupied: isDark ? 'hsl(39, 100%, 50%)' : 'hsl(39, 100%, 40%)',
+      stagingFree: isDark ? 'hsla(210, 24%, 16%, 0.6)' : 'hsla(210, 24%, 90%, 0.6)',
+      stagingOccupied: isDark ? 'hsla(39, 100%, 50%, 0.4)' : 'hsla(39, 100%, 50%, 0.3)',
+      text: isDark ? '#ffffff' : '#000000'
+    };
+  }, []);
+
+  // Render warehouse infrastructure (bins, dock doors, staging areas)
   const renderWarehouseGrid = useCallback(() => {
     const elements = [];
-    const { cellWidth, cellHeight, aisleWidth } = warehouseLayout;
+    const colors = getThemeColors();
 
-    // Aisles are now just empty space between storage bins (no explicit rendering needed)
+    // Render storage bins with outlines
+    warehouseLayout.cells.forEach(cell => {
+      if (!isInViewport(cell.x, cell.y, cell.width, cell.height)) return;
+
+      elements.push(
+        <Rect
+          key={`bin-${cell.cellId}`}
+          x={cell.x}
+          y={cell.y}
+          width={cell.width}
+          height={cell.height}
+          fill={colors.binFill}
+          stroke={colors.binOutline}
+          strokeWidth={0.5}
+          perfectDrawEnabled={false}
+          listening={false}
+        />
+      );
+
+      // Add cell ID text for better visualization (only at higher zoom levels)
+      if (viewport.zoom > 1.5) {
+        elements.push(
+          <Text
+            key={`bin-label-${cell.cellId}`}
+            x={cell.x + cell.width / 2}
+            y={cell.y + cell.height / 2}
+            text={cell.cellId.split('-')[1]} // Show just the bin number
+            fontSize={6}
+            fontFamily="Roboto"
+            fill={colors.text}
+            align="center"
+            verticalAlign="middle"
+            offsetX={10}
+            offsetY={3}
+            opacity={0.6}
+            perfectDrawEnabled={false}
+            listening={false}
+          />
+        );
+      }
+    });
+
+    // Render dock doors
+    warehouseLayout.dockDoorPositions.forEach(dock => {
+      if (!isInViewport(dock.x, dock.y, dock.width, dock.height)) return;
+
+      let fillColor = colors.dockDoorClosed;
+      if (dock.status === 'open') fillColor = colors.dockDoorOpen;
+      if (dock.status === 'occupied') fillColor = colors.dockDoorOccupied;
+
+      elements.push(
+        <Rect
+          key={`dock-${dock.id}`}
+          x={dock.x}
+          y={dock.y}
+          width={dock.width}
+          height={dock.height}
+          fill={fillColor}
+          stroke={colors.binOutline}
+          strokeWidth={2}
+          cornerRadius={4}
+          perfectDrawEnabled={false}
+          listening={false}
+        />
+      );
+
+      // Dock label
+      elements.push(
+        <Text
+          key={`dock-label-${dock.id}`}
+          x={dock.x + dock.width / 2}
+          y={dock.y + dock.height / 2}
+          text={dock.id}
+          fontSize={8}
+          fontFamily="Roboto"
+          fill={colors.text}
+          align="center"
+          verticalAlign="middle"
+          offsetX={15}
+          offsetY={4}
+          perfectDrawEnabled={false}
+          listening={false}
+        />
+      );
+    });
+
+    // Render staging areas
+    warehouseLayout.stagingAreas.forEach(staging => {
+      if (!isInViewport(staging.x, staging.y, staging.width, staging.height)) return;
+
+      const fillColor = staging.occupied ? colors.stagingOccupied : colors.stagingFree;
+
+      elements.push(
+        <Rect
+          key={`staging-${staging.id}`}
+          x={staging.x}
+          y={staging.y}
+          width={staging.width}
+          height={staging.height}
+          fill={fillColor}
+          stroke={colors.binOutline}
+          strokeWidth={1}
+          strokeDasharray={[5, 5]} // Dashed line for staging areas
+          cornerRadius={2}
+          perfectDrawEnabled={false}
+          listening={false}
+        />
+      );
+
+      // Staging area label
+      elements.push(
+        <Text
+          key={`staging-label-${staging.id}`}
+          x={staging.x + staging.width / 2}
+          y={staging.y + staging.height / 2}
+          text={staging.id}
+          fontSize={8}
+          fontFamily="Roboto"
+          fill={colors.text}
+          align="center"
+          verticalAlign="middle"
+          offsetX={25}
+          offsetY={4}
+          opacity={0.8}
+          perfectDrawEnabled={false}
+          listening={false}
+        />
+      );
+    });
 
     return elements;
-  }, [isInViewport]);
+  }, [isInViewport, viewport.zoom, getThemeColors]);
 
   // Render heatmap overlay
   const renderHeatmap = useCallback(() => {
