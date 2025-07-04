@@ -150,8 +150,8 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
                 backgroundColor: (segment as any).isWorkTime === false
                   ? '#ffffff' // White for non-work hours
                   : segment.loaded 
-                    ? '#16a34a' // Green for loaded movement
-                    : '#ea580c' // Orange for empty movement
+                    ? '#86efac' // Light green for loaded movement
+                    : '#fed7aa' // Light orange for empty movement
               }}
               title={
                 (segment as any).isWorkTime === false 
@@ -178,11 +178,11 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
         {/* Legend */}
         <div className="flex items-center justify-center gap-4 mt-1 text-xs">
           <div className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 bg-green-600 dark:bg-green-500 rounded-sm"></div>
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#86efac' }}></div>
             <span className="text-muted-foreground">With Load</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 bg-orange-500 dark:bg-orange-400 rounded-sm"></div>
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#fed7aa' }}></div>
             <span className="text-muted-foreground">Empty Movement</span>
           </div>
           <div className="flex items-center gap-1">
