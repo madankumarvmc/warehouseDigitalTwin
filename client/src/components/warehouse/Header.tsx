@@ -18,7 +18,7 @@ export function Header() {
           </div>
 
           {/* Title */}
-          <h1 className="text-sm font-normal text-foreground">
+          <h1 className="text-sm font-bold text-foreground">
             Shop Floor Digital Twin
           </h1>
         </div>
