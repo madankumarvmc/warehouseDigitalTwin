@@ -14,13 +14,10 @@ interface ActivitySegment {
 }
 
 export function TimelineView({ selectedResource, timeRange }: TimelineViewProps) {
-  console.log('TimelineView rendering for:', selectedResource, 'timeRange:', timeRange);
-  
   const activityData = useMemo(() => {
     if (!selectedResource) return [];
     
     const trail = getResourceTrail(selectedResource, timeRange);
-    console.log('Timeline trail data:', trail.length, 'points');
     if (trail.length === 0) return [];
 
     // Convert trail points to activity segments
@@ -73,15 +70,13 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
 
   const timeLabels = generateTimeLabels();
 
-  console.log('Timeline component about to render with segments:', activityData.length);
-  
   return (
-    <div className="w-full p-6 bg-red-500 border-4 border-yellow-400 min-h-[200px] shadow-xl z-50 relative">
-      <div className="mb-4 bg-white p-2 rounded">
-        <h3 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
-          📊 TIMELINE IS HERE - {selectedResource}
+    <div className="w-full px-4 py-2 bg-card border-t border-border min-h-[80px] shadow-sm">
+      <div className="mb-2">
+        <h3 className="text-sm font-medium text-foreground mb-1 flex items-center gap-2">
+          📊 Activity Timeline - {selectedResource}
         </h3>
-        <p className="text-black font-semibold">
+        <p className="text-xs text-muted-foreground">
           Last {timeRange < 60 ? `${timeRange} minutes` : `${timeRange / 60} hours`} • {activityData.length} activity segments
         </p>
       </div>
@@ -89,14 +84,14 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
       {/* Timeline container */}
       <div className="relative">
         {/* Activity bars */}
-        <div className="relative h-12 bg-muted rounded border border-border overflow-hidden">
+        <div className="relative h-5 bg-muted rounded border border-border overflow-hidden">
           {activityData.map((segment, index) => (
             <div
               key={index}
-              className={`absolute top-1 bottom-1 ${
+              className={`absolute top-0.5 bottom-0.5 rounded-sm ${
                 segment.loaded 
-                  ? 'bg-green-700' // Dark green for loaded movement
-                  : 'bg-orange-500' // Orange for empty movement
+                  ? 'bg-green-600 dark:bg-green-500' // Green for loaded movement
+                  : 'bg-orange-500 dark:bg-orange-400' // Orange for empty movement
               }`}
               style={{
                 left: `${segment.start}%`,
@@ -109,7 +104,7 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
         </div>
         
         {/* Time scale labels */}
-        <div className="relative mt-2 h-6">
+        <div className="relative mt-1 h-4">
           {timeLabels.map((label, index) => (
             <div
               key={index}
@@ -122,13 +117,13 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
         </div>
         
         {/* Legend */}
-        <div className="flex items-center justify-center gap-6 mt-3 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-700 rounded"></div>
+        <div className="flex items-center justify-center gap-4 mt-1 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 bg-green-600 dark:bg-green-500 rounded-sm"></div>
             <span className="text-muted-foreground">With Load</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-orange-500 rounded"></div>
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 bg-orange-500 dark:bg-orange-400 rounded-sm"></div>
             <span className="text-muted-foreground">Empty Movement</span>
           </div>
         </div>
