@@ -168,6 +168,14 @@ export function CollapsibleSidebar({
                       Clear Selection
                     </Button>
                   )}
+
+                  {/* Time Range Controls for Resource */}
+                  <div className="mt-4 pt-3 border-t border-border">
+                    <TimeRangeControls
+                      timeRange={timeRange}
+                      onTimeRangeChange={onTimeRangeChange}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -188,21 +196,23 @@ export function CollapsibleSidebar({
                 </button>
               </div>
               {heatmapViewVisible && (
-                <LayerControls
-                  activeLayers={activeLayers}
-                  layerOpacity={layerOpacity}
-                  onLayerToggle={onLayerToggle}
-                  onOpacityChange={onOpacityChange}
-                />
+                <>
+                  <LayerControls
+                    activeLayers={activeLayers}
+                    layerOpacity={layerOpacity}
+                    onLayerToggle={onLayerToggle}
+                    onOpacityChange={onOpacityChange}
+                  />
+                  
+                  {/* Time Range Controls for Heatmap */}
+                  <div className="mt-4 pt-3 border-t border-border">
+                    <TimeRangeControls
+                      timeRange={timeRange}
+                      onTimeRangeChange={onTimeRangeChange}
+                    />
+                  </div>
+                </>
               )}
-            </div>
-
-            {/* Time Range Controls */}
-            <div className="p-4 border-b border-border">
-              <TimeRangeControls
-                timeRange={timeRange}
-                onTimeRangeChange={onTimeRangeChange}
-              />
             </div>
 
             {/* Export Controls */}

@@ -30,6 +30,17 @@ export interface MovementTrail {
   timeRange: number; // in minutes
 }
 
+// Persistent trail storage to ensure data consistency when time range changes
+interface PersistentTrailData {
+  [resourceId: string]: {
+    baseTrail: TrailPoint[];
+    maxTimeRange: number;
+    lastGenerated: number;
+  };
+}
+
+const trailStorage: PersistentTrailData = {};
+
 // Define key warehouse locations for realistic movement using actual dock and staging positions
 function getWarehouseZones() {
   const dockDoors = warehouseLayout.dockDoorPositions;
@@ -94,16 +105,23 @@ function getRandomCellInAisle(aisleIndex: number): { x: number, y: number, cellI
 
 // Generate realistic forklift movement trail
 function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoint[] {
-  const trail: TrailPoint[] = [];
   const now = Date.now();
-  const timeSpan = timeRange * 60 * 1000; // Convert to milliseconds
-  const primaryAisle = parseInt(forkliftId.split('-')[1]) % 5; // Assign primary aisle based on ID
+  const timeSpan = timeRange * 60 * 1000;
   
-  // Create seeded random generator based on resource ID and time range
-  const seed = forkliftId.charCodeAt(forkliftId.length - 1) + timeRange;
+  // Check if we have existing data for this resource
+  const existingData = trailStorage[forkliftId];
+  
+  if (existingData && timeRange <= existingData.maxTimeRange) {
+    // Return filtered data from existing trail for shorter time ranges
+    const cutoffTime = now - timeSpan;
+    return existingData.baseTrail.filter(point => point.timestamp >= cutoffTime);
+  }
+  
+  // Generate new trail data (extending existing if needed)
+  const primaryAisle = parseInt(forkliftId.split('-')[1]) % 5;
+  const seed = forkliftId.charCodeAt(forkliftId.length - 1) + 1000; // Fixed seed for consistency
   const random = new SeededRandom(seed);
   
-  // Create more diverse starting locations across warehouse
   const warehouseZones = getWarehouseZones();
   const startingZones = [
     ...Object.values(warehouseZones),
@@ -113,45 +131,56 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
     })
   ];
   
-  let currentTime = now - timeSpan;
-  let currentLocation: { x: number; y: number; id: string } = startingZones[Math.floor(random.next() * startingZones.length)];
-  let isLoaded = random.next() < 0.3; // 30% chance to start loaded
+  let trail: TrailPoint[] = [];
+  let currentTime: number;
+  let currentLocation: { x: number; y: number; id: string };
+  let isLoaded: boolean;
   
-  // Start position
-  trail.push({
-    x: currentLocation.x,
-    y: currentLocation.y,
-    loaded: isLoaded,
-    timestamp: currentTime,
-    locationId: currentLocation.id,
-    action: 'transit'
-  });
+  if (existingData && timeRange > existingData.maxTimeRange) {
+    // Extend existing trail
+    trail = [...existingData.baseTrail];
+    const lastPoint = trail[trail.length - 1];
+    currentTime = lastPoint.timestamp;
+    currentLocation = { x: lastPoint.x, y: lastPoint.y, id: lastPoint.locationId };
+    isLoaded = lastPoint.loaded;
+  } else {
+    // Start fresh
+    currentTime = now - timeSpan;
+    currentLocation = startingZones[Math.floor(random.next() * startingZones.length)];
+    isLoaded = random.next() < 0.3;
+    
+    trail.push({
+      x: currentLocation.x,
+      y: currentLocation.y,
+      loaded: isLoaded,
+      timestamp: currentTime,
+      locationId: currentLocation.id,
+      action: 'transit'
+    });
+  }
   
-  // Generate movement sequence based on time range (more points for longer ranges)
-  const movementInterval = Math.max(30000, (timeSpan / 20)); // 20 moves max, min 30 seconds apart
-  const numMoves = Math.min(20, Math.floor(timeSpan / movementInterval));
+  // Generate points for the full time range requested
+  const totalTimeSpan = timeRange * 60 * 1000;
+  const movementInterval = Math.max(30000, (totalTimeSpan / 25));
+  const targetTime = now;
   
-  for (let i = 0; i < numMoves; i++) {
+  while (currentTime < targetTime) {
     currentTime += movementInterval;
     
-    // Ensure we don't go past current time
     if (currentTime > now) break;
     
     let nextLocation;
     
-    // Determine next destination with varied movement patterns
+    // Realistic movement patterns
     if (random.next() < 0.6) {
-      // Move within warehouse aisles (60% of time)
       const targetAisle = random.next() < 0.7 ? primaryAisle : Math.floor(random.next() * 5);
       const aisleData = getRandomCellInAisle(targetAisle);
       nextLocation = { x: aisleData.x, y: aisleData.y, id: aisleData.cellId };
     } else {
-      // Move to warehouse zones (40% of time)
       const zones = Object.values(warehouseZones);
       nextLocation = zones[Math.floor(random.next() * zones.length)];
     }
     
-    // Add the movement point
     trail.push({
       x: nextLocation.x,
       y: nextLocation.y,
@@ -161,7 +190,6 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
       action: 'transit'
     });
     
-    // Change load status occasionally
     if (random.next() < 0.3) {
       isLoaded = !isLoaded;
     }
@@ -169,20 +197,36 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
     currentLocation = nextLocation;
   }
   
-  return trail;
+  // Store the generated trail
+  trailStorage[forkliftId] = {
+    baseTrail: trail,
+    maxTimeRange: timeRange,
+    lastGenerated: now
+  };
+  
+  // Return filtered data for requested time range
+  const cutoffTime = now - timeSpan;
+  return trail.filter(point => point.timestamp >= cutoffTime);
 }
 
 // Generate realistic BOPT movement trail (more horizontal, cross-aisle movement)
 function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
-  const trail: TrailPoint[] = [];
   const now = Date.now();
   const timeSpan = timeRange * 60 * 1000;
   
-  // Create seeded random generator based on resource ID and time range
-  const seed = boptId.charCodeAt(boptId.length - 1) + timeRange * 2;
+  // Check if we have existing data for this resource
+  const existingData = trailStorage[boptId];
+  
+  if (existingData && timeRange <= existingData.maxTimeRange) {
+    // Return filtered data from existing trail for shorter time ranges
+    const cutoffTime = now - timeSpan;
+    return existingData.baseTrail.filter(point => point.timestamp >= cutoffTime);
+  }
+  
+  // Generate new trail data (extending existing if needed)
+  const seed = boptId.charCodeAt(boptId.length - 1) + 2000; // Fixed seed for consistency
   const random = new SeededRandom(seed);
   
-  // BOPTs start from various horizontal locations
   const warehouseZones = getWarehouseZones();
   const startingLocations = [
     warehouseZones.RECEIVING,
@@ -195,25 +239,40 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
     })
   ];
   
-  let currentTime = now - timeSpan;
-  let currentLocation = startingLocations[Math.floor(random.next() * startingLocations.length)];
-  let isLoaded = random.next() < 0.4;
+  let trail: TrailPoint[] = [];
+  let currentTime: number;
+  let currentLocation: { x: number; y: number; id: string };
+  let isLoaded: boolean;
   
-  // Start position
-  trail.push({
-    x: currentLocation.x,
-    y: currentLocation.y,
-    loaded: isLoaded,
-    timestamp: currentTime,
-    locationId: currentLocation.id,
-    action: 'transit'
-  });
+  if (existingData && timeRange > existingData.maxTimeRange) {
+    // Extend existing trail
+    trail = [...existingData.baseTrail];
+    const lastPoint = trail[trail.length - 1];
+    currentTime = lastPoint.timestamp;
+    currentLocation = { x: lastPoint.x, y: lastPoint.y, id: lastPoint.locationId };
+    isLoaded = lastPoint.loaded;
+  } else {
+    // Start fresh
+    currentTime = now - timeSpan;
+    currentLocation = startingLocations[Math.floor(random.next() * startingLocations.length)];
+    isLoaded = random.next() < 0.4;
+    
+    trail.push({
+      x: currentLocation.x,
+      y: currentLocation.y,
+      loaded: isLoaded,
+      timestamp: currentTime,
+      locationId: currentLocation.id,
+      action: 'transit'
+    });
+  }
   
-  // Generate movement sequence based on time range
-  const movementInterval = Math.max(45000, (timeSpan / 15));
-  const numMoves = Math.min(15, Math.floor(timeSpan / movementInterval));
+  // Generate points for the full time range requested
+  const totalTimeSpan = timeRange * 60 * 1000;
+  const movementInterval = Math.max(45000, (totalTimeSpan / 20));
+  const targetTime = now;
   
-  for (let i = 0; i < numMoves; i++) {
+  while (currentTime < targetTime) {
     currentTime += movementInterval;
     
     if (currentTime > now) break;
@@ -246,7 +305,16 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
     currentLocation = nextLocation;
   }
   
-  return trail;
+  // Store the generated trail
+  trailStorage[boptId] = {
+    baseTrail: trail,
+    maxTimeRange: timeRange,
+    lastGenerated: now
+  };
+  
+  // Return filtered data for requested time range
+  const cutoffTime = now - timeSpan;
+  return trail.filter(point => point.timestamp >= cutoffTime);
 }
 
 // Generate movement trails for all resources
