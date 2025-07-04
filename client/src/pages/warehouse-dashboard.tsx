@@ -163,7 +163,7 @@ function WarehouseDashboard() {
 
         {/* Main Content Area */}
         <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-80'}`}>
-          <div className="flex-1 flex">
+          <div className={`flex ${selectedResource ? 'flex-1' : 'h-full'}`}>
             {/* Main Canvas Area */}
             <div className="flex-1 relative">
               <WarehouseCanvas

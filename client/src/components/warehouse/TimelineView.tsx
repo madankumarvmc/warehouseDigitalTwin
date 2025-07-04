@@ -74,13 +74,13 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
   const timeLabels = generateTimeLabels();
 
   return (
-    <div className="w-full p-4 bg-card border-t border-border">
+    <div className="w-full p-4 bg-card border-t-2 border-primary min-h-[160px] shadow-lg">
       <div className="mb-3">
-        <h3 className="text-sm font-medium text-foreground mb-1">
-          Activity Timeline - {selectedResource}
+        <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
+          📊 Activity Timeline - {selectedResource}
         </h3>
-        <p className="text-xs text-muted-foreground">
-          Last {timeRange < 60 ? `${timeRange} minutes` : `${timeRange / 60} hours`}
+        <p className="text-sm text-muted-foreground">
+          Last {timeRange < 60 ? `${timeRange} minutes` : `${timeRange / 60} hours`} • {activityData.length} activity segments
         </p>
       </div>
       
