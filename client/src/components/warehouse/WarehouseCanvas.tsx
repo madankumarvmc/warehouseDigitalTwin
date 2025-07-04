@@ -342,6 +342,7 @@ function WarehouseCanvas({
     // Get realistic movement trail for the selected resource
     const trail = getResourceTrail(selectedResource, timeRange);
     console.log('Trail points received:', trail.length, 'for timeRange:', timeRange, 'minutes');
+    console.log('Trail timestamps:', trail.map((p, i) => ({ index: i+1, timestamp: new Date(p.timestamp).toLocaleTimeString() })));
     
     if (trail.length < 2) {
       console.log('Not enough trail points, returning empty');

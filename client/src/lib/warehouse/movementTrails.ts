@@ -179,14 +179,14 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   const targetTime = Math.min(now, workEndTime);
   
   while (currentTime < targetTime) {
-    // Short movement intervals for barcode-like appearance
+    // Very short movement intervals for sequential numbering visibility
     let movementDuration: number;
     if (isLoaded) {
-      // Movement with load: 20 seconds to 3 minutes (frequent short segments)
-      movementDuration = (20 + random.next() * 160) * 1000; // 20s - 3min
+      // Movement with load: 10-60 seconds (very frequent for numbering)
+      movementDuration = (10 + random.next() * 50) * 1000; // 10s - 60s
     } else {
-      // Movement without load: 15 seconds to 2 minutes (even more frequent)
-      movementDuration = (15 + random.next() * 105) * 1000; // 15s - 2min
+      // Movement without load: 8-45 seconds (even more frequent)
+      movementDuration = (8 + random.next() * 37) * 1000; // 8s - 45s
     }
     
     currentTime += movementDuration;
@@ -309,14 +309,14 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
   const targetTime = Math.min(now, workEndTime);
   
   while (currentTime < targetTime) {
-    // Short movement intervals for barcode-like appearance
+    // Very short movement intervals for sequential numbering visibility
     let movementDuration: number;
     if (isLoaded) {
-      // Movement with load: 20 seconds to 3 minutes (frequent short segments)
-      movementDuration = (20 + random.next() * 160) * 1000; // 20s - 3min
+      // Movement with load: 10-60 seconds (very frequent for numbering)
+      movementDuration = (10 + random.next() * 50) * 1000; // 10s - 60s
     } else {
-      // Movement without load: 15 seconds to 2 minutes (even more frequent)
-      movementDuration = (15 + random.next() * 105) * 1000; // 15s - 2min
+      // Movement without load: 8-45 seconds (even more frequent)
+      movementDuration = (8 + random.next() * 37) * 1000; // 8s - 45s
     }
     
     currentTime += movementDuration;
@@ -393,15 +393,55 @@ export function generateMovementTrails(timeRange: number): MovementTrail[] {
   return trails;
 }
 
-// Get trail for specific resource
+// Get trail for specific resource with force regeneration for better visibility
 export function getResourceTrail(resourceId: string, timeRange: number): TrailPoint[] {
+  // For short time ranges, force regenerate to ensure good point density
+  if (timeRange <= 60) { // For time ranges 1 hour or less
+    const resourceType = resourceId.startsWith('FL-') ? 'forklift' : 'bopt';
+    let freshTrail: TrailPoint[] = [];
+    
+    if (resourceType === 'forklift') {
+      freshTrail = generateForkliftTrail(resourceId, timeRange);
+    } else {
+      freshTrail = generateBOPTTrail(resourceId, timeRange);
+    }
+    
+    // Ensure enough points for good sequential numbering
+    if (freshTrail.length < 8) {
+      console.log('Regenerating with higher frequency for better numbering...');
+      // Add intermediate points for better visibility
+      const additionalPoints = 12 - freshTrail.length;
+      for (let i = 0; i < additionalPoints; i++) {
+        const insertIndex = Math.floor((i + 1) * freshTrail.length / (additionalPoints + 1));
+        if (insertIndex < freshTrail.length - 1) {
+          const prevPoint = freshTrail[insertIndex];
+          const nextPoint = freshTrail[insertIndex + 1];
+          const timeDiff = nextPoint.timestamp - prevPoint.timestamp;
+          
+          freshTrail.splice(insertIndex + 1, 0, {
+            x: prevPoint.x + (nextPoint.x - prevPoint.x) * 0.5,
+            y: prevPoint.y + (nextPoint.y - prevPoint.y) * 0.5,
+            loaded: prevPoint.loaded,
+            timestamp: prevPoint.timestamp + timeDiff * 0.5,
+            locationId: `intermediate-${i}`,
+            action: 'transit'
+          });
+        }
+      }
+    }
+    
+    console.log('Fresh trail generated:', freshTrail.length, 'points for', resourceId);
+    return freshTrail.sort((a, b) => a.timestamp - b.timestamp);
+  }
+  
+  // For longer time ranges, use normal generation
   const trails = generateMovementTrails(timeRange);
   const resourceTrail = trails.find(t => t.resourceId === resourceId);
   
-  // Debug logging to see what's happening
   console.log('Requested trail for:', resourceId);
-  console.log('Available trails:', trails.map(t => ({ id: t.resourceId, points: t.trail.length })));
   console.log('Found trail:', resourceTrail ? resourceTrail.trail.length : 'none');
   
-  return resourceTrail ? resourceTrail.trail : [];
+  if (!resourceTrail) return [];
+  
+  return resourceTrail.trail.sort((a, b) => a.timestamp - b.timestamp);
 }
