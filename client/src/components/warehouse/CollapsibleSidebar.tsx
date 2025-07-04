@@ -177,6 +177,7 @@ export function CollapsibleSidebar({
             {/* Heatmap Layer - Below Resource */}
             <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-3">
+                <div className="w-8"></div> {/* Spacer to align with collapse button */}
                 <h3 className="text-sm font-medium text-foreground">Heatmap Layer</h3>
                 <button
                   onClick={onHeatmapViewToggle}
