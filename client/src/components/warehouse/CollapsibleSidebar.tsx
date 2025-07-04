@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 
 import { LayerControls } from './LayerControls';
 import { TimeRangeControls } from './TimeRangeControls';
-import { ResourceTracking } from './ResourceTracking';
 import { SKUSearch } from './SKUSearch';
 import { ExportControls } from './ExportControls';
 import { HeatmapLegendPDF } from './HeatmapLegendPDF';
@@ -197,14 +196,6 @@ export function CollapsibleSidebar({
                   Clear Selection
                 </Button>
               )}
-            </div>
-
-            {/* Resource Tracking */}
-            <div className="p-4 border-b border-gray-700">
-              <ResourceTracking
-                showResources={activeLayers.resources}
-                onToggleResources={() => onLayerToggle('resources')}
-              />
             </div>
 
             {/* SKU Search */}
