@@ -376,10 +376,8 @@ function WarehouseCanvas({
 
     // Add numbered waypoint markers at each trail point with sequential numbering
     trail.forEach((point, index) => {
-      // Skip first point (starting position) from numbering to reduce clutter
-      if (index === 0) return;
-      
-      const sequentialNumber = index; // 1, 2, 3, 4... based on path sequence
+      // Show all waypoints with proper sequential numbering starting from 1
+      const sequentialNumber = index + 1; // 1, 2, 3, 4... based on path sequence
       
       // Waypoint circle with better visibility
       elements.push(

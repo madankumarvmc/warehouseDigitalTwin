@@ -15,7 +15,7 @@ export function useWarehouseData() {
 
   const [activeHeatmapType, setActiveHeatmapType] = useState<HeatmapType>('volume');
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
-  const [timeRange, setTimeRange] = useState(120); // 2 hours in minutes
+  const [timeRange, setTimeRange] = useState(15); // Default to 15 minutes (leftmost position)
   const [layerOpacity, setLayerOpacity] = useState<Record<string, number>>({
     volume: 0.8,
     frequency: 0.65,
