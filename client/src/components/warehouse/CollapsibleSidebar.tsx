@@ -128,8 +128,6 @@ export function CollapsibleSidebar({
                 </button>
               </div>
               
-              {liveResourcesViewVisible && (
-                <>
               {/* Forklifts Section */}
               <div className="mb-4 p-3 bg-[hsl(0,0%,8%)] rounded-lg border border-gray-700">
                 <div className="flex items-center justify-between mb-2">
@@ -198,8 +196,6 @@ export function CollapsibleSidebar({
                 >
                   Clear Selection
                 </Button>
-              )}
-                </>
               )}
             </div>
 
