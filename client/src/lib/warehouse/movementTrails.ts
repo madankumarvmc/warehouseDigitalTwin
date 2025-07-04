@@ -393,9 +393,8 @@ export function generateMovementTrails(timeRange: number): MovementTrail[] {
   return trails;
 }
 
-// Get trail for specific resource - simplified for proper sequential numbering
+// Get trail for specific resource with proper warehouse operations logic
 export function getResourceTrail(resourceId: string, timeRange: number): TrailPoint[] {
-  // Generate simple sequential trail for demonstration
   const trail: TrailPoint[] = [];
   const now = Date.now();
   const timeRangeMs = timeRange * 60 * 1000;
@@ -405,30 +404,60 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
   const numWaypoints = 12;
   const timeStep = timeRangeMs / numWaypoints;
   
-  // Get warehouse zones for movement
-  const zones = getWarehouseZones();
-  const zoneKeys = Object.keys(zones);
+  const isForklift = resourceId.startsWith('FL-');
+  const isBOPT = resourceId.startsWith('BP-');
   
   for (let i = 0; i < numWaypoints; i++) {
     const timestamp = startTime + (i * timeStep);
-    const zoneKey = zoneKeys[i % zoneKeys.length];
-    const zone = zones[zoneKey];
+    let x: number, y: number, locationId: string;
     
-    // Add some randomness to positions while keeping them realistic
-    const randomOffset = 20;
-    const x = zone.x + (Math.random() - 0.5) * randomOffset;
-    const y = zone.y + (Math.random() - 0.5) * randomOffset;
+    if (isForklift) {
+      // FORKLIFTS: Move only in RACK areas (aisles A1-A5)
+      const aisleIndex = i % 5; // Cycle through 5 aisles
+      const binIndex = Math.floor(Math.random() * 12); // 12 bins per aisle
+      const level = Math.floor(Math.random() * 2) + 1; // L1 or L2
+      const depth = Math.floor(Math.random() * 2) + 1; // D1 or D2
+      
+      // Aisle positions: A1=x:150, A2=x:250, A3=x:350, A4=x:450, A5=x:550
+      x = 150 + (aisleIndex * 100);
+      y = 100 + (binIndex * 40); // Bins spaced 40 units apart
+      locationId = `A${aisleIndex + 1}-B${binIndex + 1}-L${level}-D${depth}`;
+      
+    } else if (isBOPT) {
+      // BOPTs: Move between RACKS and STAGING/DOCK areas
+      if (i < 6) {
+        // First half: Move in racks for picking
+        const aisleIndex = Math.floor(Math.random() * 5);
+        const binIndex = Math.floor(Math.random() * 12);
+        x = 150 + (aisleIndex * 100);
+        y = 100 + (binIndex * 40);
+        locationId = `A${aisleIndex + 1}-B${binIndex + 1}`;
+      } else {
+        // Second half: Move to staging/dock areas
+        const zones = getWarehouseZones();
+        const stagingDockZones = [zones.STAGING_1, zones.STAGING_2, zones.RECEIVING, zones.SHIPPING];
+        const zone = stagingDockZones[i % stagingDockZones.length];
+        x = zone.x + (Math.random() - 0.5) * 30;
+        y = zone.y + (Math.random() - 0.5) * 30;
+        locationId = zone.id;
+      }
+    } else {
+      // Default fallback
+      x = 200 + Math.random() * 400;
+      y = 200 + Math.random() * 300;
+      locationId = `default-${i}`;
+    }
     
     trail.push({
       x,
       y,
       loaded: i % 3 === 0, // Vary loaded status
       timestamp,
-      locationId: `waypoint-${i + 1}`,
+      locationId,
       action: 'transit'
     });
   }
   
-  console.log('Generated sequential trail:', trail.length, 'points for', resourceId);
+  console.log('Generated warehouse-appropriate trail:', trail.length, 'points for', resourceId);
   return trail;
 }
