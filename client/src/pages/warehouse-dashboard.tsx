@@ -240,6 +240,13 @@ function WarehouseDashboard() {
               timeRange={timeRange} 
             />
           )}
+          
+          {/* Debug: Show timeline status */}
+          {liveResourcesViewVisible && (
+            <div className="bg-yellow-100 dark:bg-yellow-900 p-2 text-xs">
+              Debug: Live Resources View: {liveResourcesViewVisible ? 'ON' : 'OFF'}, Selected Resource: {selectedResource || 'NONE'}
+            </div>
+          )}
         </div>
 
         {/* Collapsed Right Sidebar Toggle - floating */}
