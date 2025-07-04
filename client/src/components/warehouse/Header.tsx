@@ -16,10 +16,10 @@ export function Header() {
             <div className="w-0.5 h-4 bg-foreground opacity-90"></div>
             <div className="w-0.5 h-4 bg-foreground"></div>
           </div>
-          
+
           {/* Title */}
           <h1 className="text-sm font-normal text-foreground">
-            Warehouse Visibility Demo
+            Shop Floor Digital Twin
           </h1>
         </div>
 
@@ -27,12 +27,12 @@ export function Header() {
         <div className="flex items-center space-x-3">
           {/* Theme Toggle */}
           <ThemeToggle />
-          
+
           {/* Notification Bell */}
           <button className="p-1 hover:bg-accent rounded transition-colors">
             <Bell size={14} className="text-muted-foreground" />
           </button>
-          
+
           {/* User Avatar */}
           <div className="flex items-center space-x-2">
             <div className="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center">

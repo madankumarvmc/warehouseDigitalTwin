@@ -62,9 +62,9 @@ export function CollapsibleSidebar({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="absolute left-0 top-12 w-80 bg-card border-r border-border flex flex-col h-[calc(100vh-3rem)] overflow-y-auto scrollbar-thin scrollbar-track-muted scrollbar-thumb-muted-foreground z-20"
           >
-            {/* Sidebar Header - Just collapse button */}
+            {/* Resource Section - Top Priority with collapse button */}
             <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-between mb-3">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -73,12 +73,6 @@ export function CollapsibleSidebar({
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-              </div>
-            </div>
-
-            {/* Resource Section - Top Priority */}
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-foreground">Resource</h3>
                 <button
                   onClick={onLiveResourcesViewToggle}
