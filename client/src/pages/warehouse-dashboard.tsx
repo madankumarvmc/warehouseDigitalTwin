@@ -163,9 +163,10 @@ function WarehouseDashboard() {
 
         {/* Main Content Area */}
         <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-80'}`}>
-          <div className={`flex ${selectedResource ? 'flex-1' : 'h-full'}`}>
+          {/* Canvas and Minimap Container */}
+          <div className={`${selectedResource ? 'flex-1' : 'h-full'} flex min-h-0`}>
             {/* Main Canvas Area */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative min-h-0">
               <WarehouseCanvas
                 heatmapData={heatmapViewVisible ? heatmapData : []}
                 forklifts={liveResourcesViewVisible ? forklifts : []}
@@ -233,12 +234,14 @@ function WarehouseDashboard() {
             )}
           </div>
 
-          {/* Timeline View - Show when any resource is selected */}
+          {/* Timeline View - Fixed at Bottom */}
           {selectedResource && (
-            <TimelineView 
-              selectedResource={selectedResource} 
-              timeRange={timeRange} 
-            />
+            <div className="flex-shrink-0">
+              <TimelineView 
+                selectedResource={selectedResource} 
+                timeRange={timeRange} 
+              />
+            </div>
           )}
         </div>
 
