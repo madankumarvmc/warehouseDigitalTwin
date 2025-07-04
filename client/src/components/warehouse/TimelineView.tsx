@@ -14,10 +14,13 @@ interface ActivitySegment {
 }
 
 export function TimelineView({ selectedResource, timeRange }: TimelineViewProps) {
+  console.log('TimelineView rendering for:', selectedResource, 'timeRange:', timeRange);
+  
   const activityData = useMemo(() => {
     if (!selectedResource) return [];
     
     const trail = getResourceTrail(selectedResource, timeRange);
+    console.log('Timeline trail data:', trail.length, 'points');
     if (trail.length === 0) return [];
 
     // Convert trail points to activity segments
