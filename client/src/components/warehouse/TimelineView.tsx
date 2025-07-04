@@ -24,8 +24,8 @@ export function TimelineView({ selectedResource, timeRange }: TimelineViewProps)
     const totalTimeSpan = timeRange * 60 * 1000;
     const startTime = now - totalTimeSpan;
     
-    // Calculate 8-hour work period positioned in center of timeline
-    const workDayDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+    // Calculate 6-hour work period positioned in center of timeline
+    const workDayDuration = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
     const workStartOffset = Math.max(0, (totalTimeSpan - workDayDuration) / 2);
     const workStartTime = startTime + workStartOffset;
     const workEndTime = Math.min(now, workStartTime + workDayDuration);

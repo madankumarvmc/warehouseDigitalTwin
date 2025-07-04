@@ -41,7 +41,7 @@ interface PersistentTrailData {
 
 const trailStorage: PersistentTrailData = {};
 
-// Clear existing trails to regenerate with new work hours logic
+// Clear existing trails to regenerate with new barcode-like timing and 6-hour work periods
 Object.keys(trailStorage).forEach(key => delete trailStorage[key]);
 
 // Define key warehouse locations for realistic movement using actual dock and staging positions
@@ -165,8 +165,8 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   // Generate points for the full time range requested
   const totalTimeSpan = timeRange * 60 * 1000;
   
-  // Define 8-hour work period within the time range
-  const workDayDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  // Define 6-hour work period within the time range
+  const workDayDuration = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
   const workStartOffset = Math.max(0, (totalTimeSpan - workDayDuration) / 2);
   const workStartTime = (now - totalTimeSpan) + workStartOffset;
   const workEndTime = Math.min(now, workStartTime + workDayDuration);
@@ -179,14 +179,14 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   const targetTime = Math.min(now, workEndTime);
   
   while (currentTime < targetTime) {
-    // Realistic movement timing based on load status
+    // Short movement intervals for barcode-like appearance
     let movementDuration: number;
     if (isLoaded) {
-      // Movement with load: 1-12 minutes (slower, more careful)
-      movementDuration = (1 + random.next() * 11) * 60 * 1000;
+      // Movement with load: 20 seconds to 3 minutes (frequent short segments)
+      movementDuration = (20 + random.next() * 160) * 1000; // 20s - 3min
     } else {
-      // Movement without load: 2-15 minutes (faster but can include longer travels)
-      movementDuration = (2 + random.next() * 13) * 60 * 1000;
+      // Movement without load: 15 seconds to 2 minutes (even more frequent)
+      movementDuration = (15 + random.next() * 105) * 1000; // 15s - 2min
     }
     
     currentTime += movementDuration;
@@ -214,8 +214,8 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
       action: 'transit'
     });
     
-    // Toggle load state occasionally to create realistic pickup/dropoff patterns
-    if (random.next() < 0.4) {
+    // Toggle load state more frequently for barcode effect
+    if (random.next() < 0.6) {
       isLoaded = !isLoaded;
     }
     
@@ -295,8 +295,8 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
   // Generate points for the full time range requested
   const totalTimeSpan = timeRange * 60 * 1000;
   
-  // Define 8-hour work period within the time range
-  const workDayDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  // Define 6-hour work period within the time range
+  const workDayDuration = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
   const workStartOffset = Math.max(0, (totalTimeSpan - workDayDuration) / 2);
   const workStartTime = (now - totalTimeSpan) + workStartOffset;
   const workEndTime = Math.min(now, workStartTime + workDayDuration);
@@ -309,14 +309,14 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
   const targetTime = Math.min(now, workEndTime);
   
   while (currentTime < targetTime) {
-    // Realistic movement timing based on load status
+    // Short movement intervals for barcode-like appearance
     let movementDuration: number;
     if (isLoaded) {
-      // Movement with load: 1-12 minutes (slower, more careful)
-      movementDuration = (1 + random.next() * 11) * 60 * 1000;
+      // Movement with load: 20 seconds to 3 minutes (frequent short segments)
+      movementDuration = (20 + random.next() * 160) * 1000; // 20s - 3min
     } else {
-      // Movement without load: 2-15 minutes (faster but can include longer travels)
-      movementDuration = (2 + random.next() * 13) * 60 * 1000;
+      // Movement without load: 15 seconds to 2 minutes (even more frequent)
+      movementDuration = (15 + random.next() * 105) * 1000; // 15s - 2min
     }
     
     currentTime += movementDuration;
@@ -344,7 +344,8 @@ function generateBOPTTrail(boptId: string, timeRange: number): TrailPoint[] {
       action: 'transit'
     });
     
-    if (random.next() < 0.4) {
+    // Toggle load state more frequently for barcode effect
+    if (random.next() < 0.6) {
       isLoaded = !isLoaded;
     }
     
