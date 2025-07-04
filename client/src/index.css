@@ -73,6 +73,22 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(0, 4.9%, 83.9%);
   --radius: 0.5rem;
+
+  /* Light mode warehouse colors */
+  --surface-light: hsl(0, 0%, 98%);
+  --surface-variant-light: hsl(0, 0%, 95%);
+  --surface-elevated-light: hsl(0, 0%, 100%);
+  --on-surface-light: hsl(0, 0%, 15%);
+  --on-surface-variant-light: hsl(0, 0%, 45%);
+}
+
+.light {
+  /* Override warehouse-specific colors for light mode */
+  --surface: hsl(0, 0%, 98%);
+  --surface-variant: hsl(0, 0%, 95%);
+  --surface-elevated: hsl(0, 0%, 100%);
+  --on-surface: hsl(0, 0%, 15%);
+  --on-surface-variant: hsl(0, 0%, 45%);
 }
 
 @layer base {

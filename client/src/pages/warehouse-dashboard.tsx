@@ -105,7 +105,7 @@ function WarehouseDashboard() {
   }
 
   return (
-    <div className="h-screen bg-[hsl(0,0%,15%)] text-[hsl(0,0%,88.2%)] flex flex-col overflow-hidden relative">
+    <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden relative">
       {/* Header */}
       <Header />
       
