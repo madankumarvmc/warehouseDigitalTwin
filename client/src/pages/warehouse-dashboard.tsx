@@ -59,6 +59,8 @@ function WarehouseDashboard() {
   const {
     forklifts,
     bopts,
+    reachTrucks,
+    agvs,
     selectedResource,
     showTrails,
     selectResource,
@@ -153,6 +155,8 @@ function WarehouseDashboard() {
           onExport={handleExport}
           forklifts={forklifts}
           bopts={bopts}
+          reachTrucks={reachTrucks}
+          agvs={agvs}
           selectedResource={selectedResource}
           onResourceSelect={selectResource}
           heatmapViewVisible={heatmapViewVisible}

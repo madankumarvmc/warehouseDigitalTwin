@@ -1,11 +1,18 @@
-import { ForkliftResource, BOPTResource } from './types';
+import { ForkliftResource, BOPTResource, ReachTruckResource, AGVResource } from './types';
 import { warehouseConfig } from './warehouseLayout';
 
 export class ResourceSimulator {
   private forklifts: ForkliftResource[] = [];
   private bopts: BOPTResource[] = [];
+  private reachTrucks: ReachTruckResource[] = [];
+  private agvs: AGVResource[] = [];
   private animationId: number | null = null;
-  private listeners: ((resources: { forklifts: ForkliftResource[], bopts: BOPTResource[] }) => void)[] = [];
+  private listeners: ((resources: { 
+    forklifts: ForkliftResource[], 
+    bopts: BOPTResource[], 
+    reachTrucks: ReachTruckResource[], 
+    agvs: AGVResource[] 
+  }) => void)[] = [];
   private lastUpdateTime: number = 0;
   private readonly UPDATE_INTERVAL = 1000; // Check every second for resource scheduling
   private resourceSchedule: Map<string, number> = new Map(); // Track next move time for each resource
@@ -13,6 +20,8 @@ export class ResourceSimulator {
   constructor() {
     this.initializeForklifts();
     this.initializeBOPTs();
+    this.initializeReachTrucks();
+    this.initializeAGVs();
     this.initializeResourceSchedule();
   }
 
@@ -27,6 +36,16 @@ export class ResourceSimulator {
     this.bopts.forEach((bopt, index) => {
       // Spread BOPT movements over 30-40 seconds  
       this.resourceSchedule.set(bopt.id, now + (index * 10000) + Math.random() * 15000);
+    });
+    
+    this.reachTrucks.forEach((rt, index) => {
+      // Spread reach truck movements over 25-35 seconds (similar to forklifts)
+      this.resourceSchedule.set(rt.id, now + (index * 9000) + Math.random() * 12000);
+    });
+    
+    this.agvs.forEach((agv, index) => {
+      // Spread AGV movements over 20-30 seconds (faster automated movement)
+      this.resourceSchedule.set(agv.id, now + (index * 7000) + Math.random() * 8000);
     });
   }
 
@@ -152,6 +171,44 @@ export class ResourceSimulator {
     ];
   }
 
+  private initializeReachTrucks() {
+    this.reachTrucks = [
+      {
+        id: 'RT-001',
+        type: 'reach-truck',
+        x: 180,
+        y: 150,
+        loaded: true,
+        trail: [],
+        speed: 2.0,
+        status: 'active',
+        targetX: 180,
+        targetY: 350,
+        direction: 'down',
+        currentAisle: 1,
+      },
+      {
+        id: 'RT-002',
+        type: 'reach-truck',
+        x: 420,
+        y: 200,
+        loaded: false,
+        trail: [],
+        speed: 1.8,
+        status: 'active',
+        targetX: 420,
+        targetY: 100,
+        direction: 'up',
+        currentAisle: 3,
+      },
+    ];
+  }
+
+  private initializeAGVs() {
+    // AGVs currently set to 0 as requested, but framework ready for future addition
+    this.agvs = [];
+  }
+
   start() {
     if (this.animationId) return;
     
@@ -220,9 +277,45 @@ export class ResourceSimulator {
         console.log(`${bopt.id} moved, next move in ${Math.round((nextMove - now) / 1000)}s`);
       }
     });
+
+    // Check Reach Trucks for scheduled movements
+    this.reachTrucks.forEach(rt => {
+      const nextMoveTime = this.resourceSchedule.get(rt.id) || 0;
+      
+      if (now >= nextMoveTime && resourcesMovedThisCycle < maxResourcesPerCycle) {
+        // Time for this reach truck to move
+        this.updateReachTruckPosition(rt);
+        this.updateResourceTrail(rt, now);
+        
+        // Schedule next movement in 25-35 seconds (similar to forklifts)
+        const nextMove = now + 25000 + Math.random() * 10000;
+        this.resourceSchedule.set(rt.id, nextMove);
+        
+        resourcesMovedThisCycle++;
+        console.log(`${rt.id} moved, next move in ${Math.round((nextMove - now) / 1000)}s`);
+      }
+    });
+
+    // Check AGVs for scheduled movements
+    this.agvs.forEach(agv => {
+      const nextMoveTime = this.resourceSchedule.get(agv.id) || 0;
+      
+      if (now >= nextMoveTime && resourcesMovedThisCycle < maxResourcesPerCycle) {
+        // Time for this AGV to move
+        this.updateAGVPosition(agv);
+        this.updateResourceTrail(agv, now);
+        
+        // Schedule next movement in 20-30 seconds (faster automated movement)
+        const nextMove = now + 20000 + Math.random() * 10000;
+        this.resourceSchedule.set(agv.id, nextMove);
+        
+        resourcesMovedThisCycle++;
+        console.log(`${agv.id} moved, next move in ${Math.round((nextMove - now) / 1000)}s`);
+      }
+    });
   }
 
-  private updateResourceTrail(resource: ForkliftResource | BOPTResource, now: number) {
+  private updateResourceTrail(resource: ForkliftResource | BOPTResource | ReachTruckResource | AGVResource, now: number) {
     // Add current position to trail
     resource.trail.push({
       x: resource.x,
@@ -390,18 +483,168 @@ export class ResourceSimulator {
     bopt.direction = bopt.targetX > bopt.x ? 'right' : 'left';
   }
 
-  addListener(callback: (resources: { forklifts: ForkliftResource[], bopts: BOPTResource[] }) => void) {
+  private updateReachTruckPosition(reachTruck: ReachTruckResource) {
+    // Reach trucks operate similar to forklifts but with extended reach capabilities
+    const movementSpeed = reachTruck.speed * 2.0; // Same speed as forklifts
+    
+    // Calculate aisle center X position
+    const aisleWidth = warehouseConfig.aisleWidth;
+    const cellWidth = warehouseConfig.cellWidth;
+    const aisleX = (reachTruck.currentAisle || 0) * (cellWidth * 2 + aisleWidth) + cellWidth + aisleWidth / 2;
+    
+    // Keep reach truck in aisle center
+    reachTruck.x = aisleX + (Math.random() - 0.5) * 25; // Slightly wider movement for reach capability
+    
+    // Move towards target Y position
+    const targetY = reachTruck.targetY || reachTruck.y;
+    const deltaY = targetY - reachTruck.y;
+    const direction = deltaY > 0 ? 1 : -1;
+    
+    // Move at consistent speed towards target
+    if (Math.abs(deltaY) > movementSpeed) {
+      reachTruck.y += direction * movementSpeed;
+    } else {
+      reachTruck.y = targetY;
+      this.setNewReachTruckTarget(reachTruck);
+    }
+
+    // Keep within warehouse bounds
+    const maxY = warehouseConfig.binsPerAisle * warehouseConfig.cellHeight;
+    reachTruck.y = Math.max(30, Math.min(maxY - 30, reachTruck.y));
+
+    // Change load status at end of aisles
+    if (Math.abs(reachTruck.y - (reachTruck.targetY || 0)) < 10) {
+      if (Math.random() < 0.4) {
+        reachTruck.loaded = !reachTruck.loaded;
+      }
+    }
+  }
+
+  private updateAGVPosition(agv: AGVResource) {
+    // AGVs move along predefined paths with automated precision
+    const movementSpeed = agv.speed * 1.5; // Consistent automated movement
+    
+    // Keep AGV at consistent Y level for horizontal movement
+    const baseY = agv.targetY || agv.y;
+    agv.y = baseY + (Math.random() - 0.5) * 5; // Very precise movement
+    
+    // Move towards target X position
+    const targetX = agv.targetX || agv.x;
+    const deltaX = targetX - agv.x;
+    const direction = deltaX > 0 ? 1 : -1;
+    
+    // Move at consistent speed towards target
+    if (Math.abs(deltaX) > movementSpeed) {
+      agv.x += direction * movementSpeed;
+    } else {
+      agv.x = targetX;
+      this.setNewAGVTarget(agv);
+    }
+
+    // Keep within warehouse bounds
+    const maxX = warehouseConfig.aisles.length * (warehouseConfig.cellWidth * 2 + warehouseConfig.aisleWidth);
+    agv.x = Math.max(50, Math.min(maxX - 50, agv.x));
+
+    // AGVs change load status more frequently due to automation
+    if (Math.abs(agv.x - (agv.targetX || 0)) < 10) {
+      if (Math.random() < 0.6) {
+        agv.loaded = !agv.loaded;
+      }
+    }
+  }
+
+  private setNewReachTruckTarget(reachTruck: ReachTruckResource) {
+    const maxY = warehouseConfig.binsPerAisle * warehouseConfig.cellHeight;
+    
+    // Reach trucks can access higher levels - similar movement pattern to forklifts
+    // 80% chance for full aisle traversal
+    if (Math.random() < 0.8) {
+      if (reachTruck.y < maxY / 2) {
+        reachTruck.targetY = maxY - 40;
+        reachTruck.direction = 'down';
+      } else {
+        reachTruck.targetY = 40;
+        reachTruck.direction = 'up';
+      }
+    } else {
+      // Occasional cross-aisle movement
+      if (Math.random() < 0.2) {
+        const currentAisle = reachTruck.currentAisle || 0;
+        const adjacentAisles = [
+          Math.max(0, currentAisle - 1),
+          Math.min(warehouseConfig.aisles.length - 1, currentAisle + 1)
+        ];
+        reachTruck.currentAisle = adjacentAisles[Math.floor(Math.random() * adjacentAisles.length)];
+      }
+      
+      const currentBin = Math.floor(reachTruck.y / warehouseConfig.cellHeight);
+      const maxBins = Math.floor(maxY / warehouseConfig.cellHeight);
+      const halfAisleDistance = Math.floor(maxBins / 2);
+      let targetBin;
+      
+      if (currentBin < maxBins / 2) {
+        targetBin = Math.min(maxBins - 1, currentBin + halfAisleDistance);
+        reachTruck.direction = 'down';
+      } else {
+        targetBin = Math.max(0, currentBin - halfAisleDistance);
+        reachTruck.direction = 'up';
+      }
+      
+      reachTruck.targetY = targetBin * warehouseConfig.cellHeight + 30;
+    }
+  }
+
+  private setNewAGVTarget(agv: AGVResource) {
+    const maxX = warehouseConfig.aisles.length * (warehouseConfig.cellWidth * 2 + warehouseConfig.aisleWidth);
+    
+    // AGVs follow automated paths - move between designated pick/drop points
+    if (Math.random() < 0.7) {
+      // Move to opposite side of warehouse (automated route)
+      if (agv.x < maxX / 2) {
+        agv.targetX = maxX - 80;
+        agv.direction = 'right';
+      } else {
+        agv.targetX = 80;
+        agv.direction = 'left';
+      }
+    } else {
+      // Move to random intermediate position (path optimization)
+      const intermediatePositions = [150, 280, 410, 540];
+      agv.targetX = intermediatePositions[Math.floor(Math.random() * intermediatePositions.length)];
+      agv.direction = agv.targetX > agv.x ? 'right' : 'left';
+    }
+    
+    // Occasionally change Y level for different automated routes
+    if (Math.random() < 0.3) {
+      const automatedLevels = [100, 160, 220, 280]; // Predefined AGV paths
+      agv.targetY = automatedLevels[Math.floor(Math.random() * automatedLevels.length)];
+    }
+  }
+
+  addListener(callback: (resources: { 
+    forklifts: ForkliftResource[], 
+    bopts: BOPTResource[], 
+    reachTrucks: ReachTruckResource[], 
+    agvs: AGVResource[] 
+  }) => void) {
     this.listeners.push(callback);
   }
 
-  removeListener(callback: (resources: { forklifts: ForkliftResource[], bopts: BOPTResource[] }) => void) {
+  removeListener(callback: (resources: { 
+    forklifts: ForkliftResource[], 
+    bopts: BOPTResource[], 
+    reachTrucks: ReachTruckResource[], 
+    agvs: AGVResource[] 
+  }) => void) {
     this.listeners = this.listeners.filter(listener => listener !== callback);
   }
 
   private notifyListeners() {
     this.listeners.forEach(listener => listener({ 
       forklifts: [...this.forklifts], 
-      bopts: [...this.bopts] 
+      bopts: [...this.bopts],
+      reachTrucks: [...this.reachTrucks],
+      agvs: [...this.agvs]
     }));
   }
 
@@ -413,14 +656,39 @@ export class ResourceSimulator {
     return [...this.bopts];
   }
 
-  getAllResources(): { forklifts: ForkliftResource[], bopts: BOPTResource[] } {
-    return { forklifts: [...this.forklifts], bopts: [...this.bopts] };
+  getReachTrucks(): ReachTruckResource[] {
+    return [...this.reachTrucks];
   }
 
-  getResourceById(id: string): ForkliftResource | BOPTResource | undefined {
+  getAGVs(): AGVResource[] {
+    return [...this.agvs];
+  }
+
+  getAllResources(): { 
+    forklifts: ForkliftResource[], 
+    bopts: BOPTResource[], 
+    reachTrucks: ReachTruckResource[], 
+    agvs: AGVResource[] 
+  } {
+    return { 
+      forklifts: [...this.forklifts], 
+      bopts: [...this.bopts], 
+      reachTrucks: [...this.reachTrucks], 
+      agvs: [...this.agvs] 
+    };
+  }
+
+  getResourceById(id: string): ForkliftResource | BOPTResource | ReachTruckResource | AGVResource | undefined {
     const forklift = this.forklifts.find(f => f.id === id);
     if (forklift) return forklift;
-    return this.bopts.find(b => b.id === id);
+    
+    const bopt = this.bopts.find(b => b.id === id);
+    if (bopt) return bopt;
+    
+    const reachTruck = this.reachTrucks.find(rt => rt.id === id);
+    if (reachTruck) return reachTruck;
+    
+    return this.agvs.find(agv => agv.id === id);
   }
 
   getForkliftById(id: string): ForkliftResource | undefined {
@@ -429,6 +697,14 @@ export class ResourceSimulator {
 
   getBOPTById(id: string): BOPTResource | undefined {
     return this.bopts.find(bopt => bopt.id === id);
+  }
+
+  getReachTruckById(id: string): ReachTruckResource | undefined {
+    return this.reachTrucks.find(rt => rt.id === id);
+  }
+
+  getAGVById(id: string): AGVResource | undefined {
+    return this.agvs.find(agv => agv.id === id);
   }
 }
 

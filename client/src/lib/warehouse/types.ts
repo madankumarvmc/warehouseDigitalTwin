@@ -37,6 +37,14 @@ export interface BOPTResource extends ResourceBase {
   type: 'bopt';
 }
 
+export interface ReachTruckResource extends ResourceBase {
+  type: 'reach-truck';
+}
+
+export interface AGVResource extends ResourceBase {
+  type: 'agv';
+}
+
 export type HeatmapType = 'volume' | 'frequency' | 'occupancy' | 'misplacement' | 'expiry' | 'exceptions';
 
 export interface LayerState {

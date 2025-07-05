@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Truck, Package, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Truck, Package, Eye, EyeOff, Forklift, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import { LayerControls } from './LayerControls';
@@ -8,7 +8,7 @@ import { TimeRangeControls } from './TimeRangeControls';
 import { SKUSearch } from './SKUSearch';
 import { ExportControls } from './ExportControls';
 import { HeatmapLegendPDF } from './HeatmapLegendPDF';
-import { ForkliftResource, BOPTResource } from '@/lib/warehouse/types';
+import { ForkliftResource, BOPTResource, ReachTruckResource, AGVResource } from '@/lib/warehouse/types';
 
 interface CollapsibleSidebarProps {
   isCollapsed: boolean;
@@ -23,6 +23,8 @@ interface CollapsibleSidebarProps {
   onExport: (format: 'png' | 'svg') => void;
   forklifts: ForkliftResource[];
   bopts: BOPTResource[];
+  reachTrucks: ReachTruckResource[];
+  agvs: AGVResource[];
   selectedResource: string | null;
   onResourceSelect: (resourceId: string | null) => void;
   heatmapViewVisible: boolean;
@@ -44,6 +46,8 @@ export function CollapsibleSidebar({
   onExport,
   forklifts,
   bopts,
+  reachTrucks,
+  agvs,
   selectedResource,
   onResourceSelect,
   heatmapViewVisible,
@@ -152,6 +156,64 @@ export function CollapsibleSidebar({
                           value={bopt.id}
                         >
                           {bopt.id} ({bopt.status} • {bopt.loaded ? 'Loaded' : 'Empty'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Reach Trucks Section */}
+                  <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Forklift className="w-4 h-4 text-green-400" />
+                        <span className="text-sm text-foreground">RTs</span>
+                        <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+                          {reachTrucks.length} Active
+                        </span>
+                      </div>
+                      <Eye className="w-4 h-4 text-primary" />
+                    </div>
+                    <select 
+                      value={selectedResource && reachTrucks.some(rt => rt.id === selectedResource) ? selectedResource : ""} 
+                      onChange={(e) => onResourceSelect(e.target.value || null)}
+                      className="w-full bg-background border border-border text-foreground rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">Select a reach truck to track</option>
+                      {reachTrucks.map((rt) => (
+                        <option 
+                          key={rt.id} 
+                          value={rt.id}
+                        >
+                          {rt.id} ({rt.status} • {rt.loaded ? 'Loaded' : 'Empty'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* AGVs Section */}
+                  <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm text-foreground">AGVs</span>
+                        <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                          {agvs.length} Active
+                        </span>
+                      </div>
+                      <Eye className="w-4 h-4 text-primary" />
+                    </div>
+                    <select 
+                      value={selectedResource && agvs.some(agv => agv.id === selectedResource) ? selectedResource : ""} 
+                      onChange={(e) => onResourceSelect(e.target.value || null)}
+                      className="w-full bg-background border border-border text-foreground rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">Select an AGV to track</option>
+                      {agvs.map((agv) => (
+                        <option 
+                          key={agv.id} 
+                          value={agv.id}
+                        >
+                          {agv.id} ({agv.status} • {agv.loaded ? 'Loaded' : 'Empty'})
                         </option>
                       ))}
                     </select>
