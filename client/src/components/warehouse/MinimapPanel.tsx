@@ -94,7 +94,7 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
   }
 
   return (
-    <div className={`${sidebarCollapsed ? 'w-96' : 'w-80'} bg-card border-l border-border p-4 transition-all duration-300 relative`}>
+    <div className={`${sidebarCollapsed ? 'w-96' : 'w-80'} bg-red-500 border-l border-border p-4 transition-all duration-300 relative flex-shrink-0`}>
       {/* Header with collapse button */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium text-foreground">Overview</h3>
