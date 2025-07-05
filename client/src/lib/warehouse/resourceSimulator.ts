@@ -320,22 +320,28 @@ export class ResourceSimulator {
       forklift.currentAisle = adjacentAisles[Math.floor(Math.random() * adjacentAisles.length)];
     }
     
-    // Move to nearby bin (realistic 2-4 bin distance, not across entire aisle)
+    // Move significant distances: 5 bins to across entire aisle
     const currentBin = Math.floor(forklift.y / warehouseConfig.cellHeight);
     const maxBins = Math.floor(maxY / warehouseConfig.cellHeight);
     
-    // Move 2-4 bins away in a logical direction
-    const moveDistance = 2 + Math.floor(Math.random() * 3); // 2-4 bins
+    // Move 5-12 bins away for realistic warehouse operations
+    const moveDistance = 5 + Math.floor(Math.random() * 8); // 5-12 bins
     let targetBin;
     
-    if (currentBin < maxBins / 2) {
-      // In first half, move down the aisle
-      targetBin = Math.min(maxBins - 1, currentBin + moveDistance);
-      forklift.direction = 'down';
+    // Determine movement direction based on warehouse workflow
+    if (Math.random() < 0.5) {
+      // Move toward opposite end of aisle (long distance movement)
+      if (currentBin < maxBins / 2) {
+        targetBin = Math.min(maxBins - 1, currentBin + moveDistance);
+        forklift.direction = 'down';
+      } else {
+        targetBin = Math.max(0, currentBin - moveDistance);
+        forklift.direction = 'up';
+      }
     } else {
-      // In second half, move up the aisle
-      targetBin = Math.max(0, currentBin - moveDistance);
-      forklift.direction = 'up';
+      // Sometimes move to random location in aisle (repositioning)
+      targetBin = Math.floor(Math.random() * maxBins);
+      forklift.direction = targetBin > currentBin ? 'down' : 'up';
     }
     
     forklift.targetY = targetBin * warehouseConfig.cellHeight + 30;
@@ -344,23 +350,30 @@ export class ResourceSimulator {
   private setNewBOPTTarget(bopt: BOPTResource) {
     const maxX = warehouseConfig.aisles.length * (warehouseConfig.cellWidth * 2 + warehouseConfig.aisleWidth);
     
-    // BOPTs move shorter distances between staging areas and nearby aisles
+    // BOPTs move significant distances across multiple aisles
     const currentAisle = Math.floor((bopt.x - 80) / 120); // Approximate current aisle
     const maxAisle = warehouseConfig.aisles.length - 1;
     
-    // Move to adjacent aisle or staging area (realistic 1-2 aisle movement)
+    // Move across multiple aisles or to staging areas (5 bins to across warehouse)
     let targetAisle;
-    if (Math.random() < 0.3) {
-      // 30% chance to go to staging area
+    if (Math.random() < 0.4) {
+      // 40% chance to go to staging area (long distance movement)
       const stagingAreas = [50, maxX - 50]; // Left or right staging
       bopt.targetX = stagingAreas[Math.floor(Math.random() * stagingAreas.length)];
     } else {
-      // 70% chance to move to adjacent aisle
-      const adjacentAisles = [
-        Math.max(0, currentAisle - 1),
-        Math.min(maxAisle, currentAisle + 1)
-      ];
-      targetAisle = adjacentAisles[Math.floor(Math.random() * adjacentAisles.length)];
+      // 60% chance to move across multiple aisles (2-4 aisles away)
+      const aisleJump = 2 + Math.floor(Math.random() * 3); // Move 2-4 aisles
+      
+      if (Math.random() < 0.5) {
+        // Move toward opposite side of warehouse
+        targetAisle = currentAisle < maxAisle / 2 ? 
+          Math.min(maxAisle, currentAisle + aisleJump) : 
+          Math.max(0, currentAisle - aisleJump);
+      } else {
+        // Move to random distant aisle
+        targetAisle = Math.floor(Math.random() * (maxAisle + 1));
+      }
+      
       bopt.targetX = 80 + (targetAisle * 120); // Aisle spacing
     }
     
