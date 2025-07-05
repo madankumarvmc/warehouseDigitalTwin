@@ -393,7 +393,7 @@ export function generateMovementTrails(timeRange: number): MovementTrail[] {
   return trails;
 }
 
-// Get trail for specific resource with stable, deterministic paths
+// Get trail for specific resource with realistic warehouse movement patterns
 export function getResourceTrail(resourceId: string, timeRange: number): TrailPoint[] {
   // Check if we already have a stable trail for this resource and time range
   const cacheKey = `${resourceId}-${timeRange}`;
@@ -408,64 +408,157 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
   const trail: TrailPoint[] = [];
   const now = Date.now();
   const timeRangeMs = timeRange * 60 * 1000;
-  const startTime = now - timeRangeMs;
-  
-  // Create exactly 12 waypoints for clear sequential numbering
-  const numWaypoints = 12;
-  const timeStep = timeRangeMs / numWaypoints;
+  let currentTime = now - timeRangeMs;
   
   const isForklift = resourceId.startsWith('FL-');
   const isBOPT = resourceId.startsWith('BP-');
   
-  for (let i = 0; i < numWaypoints; i++) {
-    const timestamp = startTime + (i * timeStep);
+  // Realistic warehouse movement parameters
+  const warehouseParams = {
+    forklift: {
+      speedUnloaded: 4.5, // m/s (10 mph average)
+      speedLoaded: 2.5,   // m/s (5.5 mph average)
+      dwellTime: { min: 15000, max: 45000 }, // 15-45 seconds for pick/place
+      acceleration: 1.5,  // m/s² for realistic movement
+    },
+    bopt: {
+      speedUnloaded: 2.0, // m/s (4.5 mph)
+      speedLoaded: 1.5,   // m/s (3.3 mph)
+      dwellTime: { min: 20000, max: 60000 }, // 20-60 seconds for handling
+      acceleration: 1.0,  // m/s² slower acceleration
+    }
+  };
+  
+  // Starting position and state
+  let currentAisle = Math.floor(random.next() * 5); // Start in random aisle
+  let currentBin = Math.floor(random.next() * 12);
+  let isLoaded = false;
+  let waypointCount = 0;
+  
+  while (currentTime < now && waypointCount < 15) {
     let x: number, y: number, locationId: string;
+    let dwellTime: number;
+    let nextAisle: number, nextBin: number;
     
     if (isForklift) {
-      // FORKLIFTS: Move only in RACK areas (aisles A1-A5) - DETERMINISTIC
-      const aisleIndex = i % 5; // Cycle through 5 aisles
-      const binIndex = Math.floor(random.next() * 12); // Seeded random for consistency
-      const level = Math.floor(random.next() * 2) + 1; // L1 or L2
-      const depth = Math.floor(random.next() * 2) + 1; // D1 or D2
+      // FORKLIFTS: Realistic rack movement with proper sequencing
+      const params = warehouseParams.forklift;
       
-      // Aisle positions: A1=x:150, A2=x:250, A3=x:350, A4=x:450, A5=x:550
-      x = 150 + (aisleIndex * 100);
-      y = 100 + (binIndex * 40); // Bins spaced 40 units apart
-      locationId = `A${aisleIndex + 1}-B${binIndex + 1}-L${level}-D${depth}`;
+      // 80% of time stay in current or adjacent aisles (realistic work pattern)
+      if (random.next() < 0.8) {
+        // Move to adjacent aisle or same aisle different bin
+        const aisleChange = Math.floor(random.next() * 3) - 1; // -1, 0, or 1
+        nextAisle = Math.max(0, Math.min(4, currentAisle + aisleChange));
+        nextBin = Math.floor(random.next() * 12);
+      } else {
+        // Occasionally move to distant aisle (repositioning)
+        nextAisle = Math.floor(random.next() * 5);
+        nextBin = Math.floor(random.next() * 12);
+      }
+      
+      // Calculate realistic travel time
+      const distance = Math.sqrt(
+        Math.pow((nextAisle - currentAisle) * 100, 2) + 
+        Math.pow((nextBin - currentBin) * 40, 2)
+      );
+      const speed = isLoaded ? params.speedLoaded : params.speedUnloaded;
+      const travelTime = (distance / speed) * 1000; // Convert to milliseconds
+      
+      // Add travel time
+      currentTime += Math.max(travelTime, 10000); // Minimum 10 seconds between moves
+      
+      // Position calculation
+      x = 150 + (nextAisle * 100);
+      y = 100 + (nextBin * 40);
+      const level = Math.floor(random.next() * 2) + 1;
+      const depth = Math.floor(random.next() * 2) + 1;
+      locationId = `A${nextAisle + 1}-B${nextBin + 1}-L${level}-D${depth}`;
+      
+      // Realistic dwell time for pick/place operations
+      dwellTime = params.dwellTime.min + (random.next() * (params.dwellTime.max - params.dwellTime.min));
       
     } else if (isBOPT) {
-      // BOPTs: Move between RACKS and STAGING/DOCK areas - DETERMINISTIC
-      if (i < 6) {
-        // First half: Move in racks for picking
-        const aisleIndex = Math.floor(random.next() * 5);
-        const binIndex = Math.floor(random.next() * 12);
-        x = 150 + (aisleIndex * 100);
-        y = 100 + (binIndex * 40);
-        locationId = `A${aisleIndex + 1}-B${binIndex + 1}`;
+      // BOPTs: Move between racks and staging areas with realistic patterns
+      const params = warehouseParams.bopt;
+      
+      if (waypointCount < 8) {
+        // First phase: Rack operations (sequential movement)
+        nextAisle = Math.floor(waypointCount / 2) % 5; // Sequential aisle progression
+        nextBin = Math.floor(random.next() * 12);
+        
+        x = 150 + (nextAisle * 100);
+        y = 100 + (nextBin * 40);
+        locationId = `A${nextAisle + 1}-B${nextBin + 1}`;
+        
+        // Calculate travel time
+        const distance = Math.sqrt(
+          Math.pow((nextAisle - currentAisle) * 100, 2) + 
+          Math.pow((nextBin - currentBin) * 40, 2)
+        );
+        const speed = isLoaded ? params.speedLoaded : params.speedUnloaded;
+        const travelTime = (distance / speed) * 1000;
+        currentTime += Math.max(travelTime, 15000); // Minimum 15 seconds
+        
       } else {
-        // Second half: Move to staging/dock areas
+        // Second phase: Move to staging/dock areas
         const zones = getWarehouseZones();
         const stagingDockZones = [zones.STAGING_1, zones.STAGING_2, zones.RECEIVING, zones.SHIPPING];
-        const zone = stagingDockZones[(i - 6) % stagingDockZones.length];
-        x = zone.x + (random.next() - 0.5) * 30;
-        y = zone.y + (random.next() - 0.5) * 30;
+        const zone = stagingDockZones[(waypointCount - 8) % stagingDockZones.length];
+        
+        // Calculate travel time to staging area
+        const currentX = 150 + (currentAisle * 100);
+        const currentY = 100 + (currentBin * 40);
+        const distance = Math.sqrt(
+          Math.pow(zone.x - currentX, 2) + 
+          Math.pow(zone.y - currentY, 2)
+        );
+        const speed = isLoaded ? params.speedLoaded : params.speedUnloaded;
+        const travelTime = (distance / speed) * 1000;
+        currentTime += Math.max(travelTime, 20000); // Minimum 20 seconds to staging
+        
+        x = zone.x + (random.next() - 0.5) * 20;
+        y = zone.y + (random.next() - 0.5) * 20;
         locationId = zone.id;
       }
+      
+      dwellTime = params.dwellTime.min + (random.next() * (params.dwellTime.max - params.dwellTime.min));
+      currentAisle = nextAisle;
+      currentBin = nextBin;
+      
     } else {
       // Default fallback
       x = 200 + random.next() * 400;
       y = 200 + random.next() * 300;
-      locationId = `default-${i}`;
+      locationId = `default-${waypointCount}`;
+      dwellTime = 30000; // 30 seconds default
+      currentTime += 60000; // 1 minute between moves
     }
     
+    // Add waypoint with realistic timestamp
     trail.push({
       x,
       y,
-      loaded: i % 3 === 0, // Vary loaded status
-      timestamp,
+      loaded: isLoaded,
+      timestamp: currentTime,
       locationId,
-      action: 'transit'
+      action: waypointCount === 0 ? 'start' : (isLoaded ? 'pickup' : 'dropoff')
     });
+    
+    // Add dwell time for operations
+    currentTime += dwellTime;
+    
+    // Update state
+    if (isForklift) {
+      currentAisle = nextAisle;
+      currentBin = nextBin;
+    }
+    
+    // Toggle load state periodically (realistic work cycle)
+    if (random.next() < 0.4) { // 40% chance to change load state
+      isLoaded = !isLoaded;
+    }
+    
+    waypointCount++;
   }
   
   // Store in cache for consistency
@@ -475,6 +568,6 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
     lastGenerated: now
   };
   
-  console.log('Generated stable trail:', trail.length, 'points for', resourceId);
+  console.log('Generated realistic warehouse trail:', trail.length, 'points for', resourceId, 'over', timeRange, 'minutes');
   return trail;
 }
