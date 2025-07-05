@@ -39,7 +39,7 @@ export function Header() {
               <User size={12} className="text-white" />
             </div>
             <span className="text-xs text-muted-foreground hidden sm:inline">
-              Demo
+              Nestle-DC1
             </span>
           </div>
         </div>

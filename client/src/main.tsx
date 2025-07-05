@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-console.log("Starting Warehouse Visibility Demo...");
+console.log("Starting Nestle-DC1 Warehouse Visibility...");
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
