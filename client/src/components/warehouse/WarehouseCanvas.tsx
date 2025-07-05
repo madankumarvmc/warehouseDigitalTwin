@@ -451,38 +451,91 @@ function WarehouseCanvas({
         />
       );
 
-      // Industrial truck icon (simple representation)
+      // Professional forklift icon
+      // Main body
       elements.push(
         <Rect
-          key={`forklift-icon-${forklift.id}`}
-          x={forklift.x - 4}
+          key={`forklift-body-${forklift.id}`}
+          x={forklift.x - 5}
           y={forklift.y - 3}
-          width={8}
-          height={6}
-          fill="hsl(0, 0%, 100%)"
-          opacity={opacity * 0.8}
+          width={10}
+          height={5}
+          fill="hsl(0, 0%, 20%)"
+          cornerRadius={1}
+          opacity={opacity * 0.9}
         />
       );
       
-      // Truck wheels
+      // Cabin
+      elements.push(
+        <Rect
+          key={`forklift-cabin-${forklift.id}`}
+          x={forklift.x - 2}
+          y={forklift.y - 5}
+          width={4}
+          height={3}
+          fill="hsl(0, 0%, 30%)"
+          cornerRadius={1}
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Mast (vertical)
+      elements.push(
+        <Rect
+          key={`forklift-mast-${forklift.id}`}
+          x={forklift.x + 4}
+          y={forklift.y - 7}
+          width={1}
+          height={8}
+          fill="hsl(0, 0%, 25%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Forks
+      elements.push(
+        <Rect
+          key={`forklift-fork1-${forklift.id}`}
+          x={forklift.x + 5}
+          y={forklift.y - 1}
+          width={3}
+          height={0.5}
+          fill="hsl(0, 0%, 40%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      elements.push(
+        <Rect
+          key={`forklift-fork2-${forklift.id}`}
+          x={forklift.x + 5}
+          y={forklift.y + 1}
+          width={3}
+          height={0.5}
+          fill="hsl(0, 0%, 40%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Wheels
       elements.push(
         <Circle
           key={`forklift-wheel1-${forklift.id}`}
           x={forklift.x - 3}
           y={forklift.y + 2}
           radius={1.5}
-          fill="hsl(0, 0%, 20%)"
-          opacity={opacity * 0.8}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
         />
       );
       elements.push(
         <Circle
           key={`forklift-wheel2-${forklift.id}`}
-          x={forklift.x + 3}
+          x={forklift.x + 2}
           y={forklift.y + 2}
           radius={1.5}
-          fill="hsl(0, 0%, 20%)"
-          opacity={opacity * 0.8}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
         />
       );
 
@@ -549,37 +602,91 @@ function WarehouseCanvas({
         />
       );
 
-      // Industrial package icon (simple representation)
+      // Professional BOPT (pallet jack) icon
+      // Main base platform
       elements.push(
         <Rect
-          key={`bopt-package-${bopt.id}`}
-          x={bopt.x - 3}
-          y={bopt.y - 3}
-          width={6}
-          height={6}
-          fill="hsl(0, 0%, 100%)"
-          cornerRadius={1}
-          opacity={opacity * 0.8}
+          key={`bopt-base-${bopt.id}`}
+          x={bopt.x - 4}
+          y={bopt.y - 1}
+          width={8}
+          height={2}
+          fill="hsl(0, 0%, 20%)"
+          cornerRadius={0.5}
+          opacity={opacity * 0.9}
         />
       );
       
-      // Package detail lines
+      // Handle/steering column
       elements.push(
-        <Line
-          key={`bopt-line1-${bopt.id}`}
-          points={[bopt.x - 1, bopt.y - 1, bopt.x + 1, bopt.y - 1]}
-          stroke="hsl(0, 0%, 20%)"
-          strokeWidth={0.5}
-          opacity={opacity * 0.8}
+        <Rect
+          key={`bopt-handle-${bopt.id}`}
+          x={bopt.x - 0.5}
+          y={bopt.y - 6}
+          width={1}
+          height={5}
+          fill="hsl(0, 0%, 25%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Control head
+      elements.push(
+        <Rect
+          key={`bopt-head-${bopt.id}`}
+          x={bopt.x - 1.5}
+          y={bopt.y - 7}
+          width={3}
+          height={1.5}
+          fill="hsl(0, 0%, 30%)"
+          cornerRadius={0.5}
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Pallet forks
+      elements.push(
+        <Rect
+          key={`bopt-fork1-${bopt.id}`}
+          x={bopt.x - 4}
+          y={bopt.y + 1}
+          width={8}
+          height={0.8}
+          fill="hsl(0, 0%, 25%)"
+          opacity={opacity * 0.9}
         />
       );
       elements.push(
-        <Line
-          key={`bopt-line2-${bopt.id}`}
-          points={[bopt.x - 1, bopt.y + 1, bopt.x + 1, bopt.y + 1]}
-          stroke="hsl(0, 0%, 20%)"
-          strokeWidth={0.5}
-          opacity={opacity * 0.8}
+        <Rect
+          key={`bopt-fork2-${bopt.id}`}
+          x={bopt.x - 4}
+          y={bopt.y + 3}
+          width={8}
+          height={0.8}
+          fill="hsl(0, 0%, 25%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Wheels
+      elements.push(
+        <Circle
+          key={`bopt-wheel1-${bopt.id}`}
+          x={bopt.x - 3}
+          y={bopt.y}
+          radius={1}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      elements.push(
+        <Circle
+          key={`bopt-wheel2-${bopt.id}`}
+          x={bopt.x + 3}
+          y={bopt.y}
+          radius={1}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
         />
       );
 
@@ -644,36 +751,105 @@ function WarehouseCanvas({
         />
       );
 
-      // Reach Truck icon (with extended reach arms)
+      // Professional Reach Truck icon
+      // Main chassis
       elements.push(
         <Rect
-          key={`rt-body-${rt.id}`}
-          x={rt.x - 3}
+          key={`rt-chassis-${rt.id}`}
+          x={rt.x - 4}
           y={rt.y - 2}
-          width={6}
+          width={8}
           height={4}
-          fill="hsl(0, 0%, 100%)"
-          opacity={opacity * 0.8}
+          fill="hsl(0, 0%, 20%)"
+          cornerRadius={1}
+          opacity={opacity * 0.9}
         />
       );
       
-      // Reach arms (extended forks)
+      // Operator compartment
       elements.push(
-        <Line
-          key={`rt-arm1-${rt.id}`}
-          points={[rt.x - 4, rt.y - 1, rt.x - 6, rt.y - 1]}
-          stroke="hsl(0, 0%, 100%)"
-          strokeWidth={1}
-          opacity={opacity * 0.8}
+        <Rect
+          key={`rt-compartment-${rt.id}`}
+          x={rt.x - 1}
+          y={rt.y - 4}
+          width={2}
+          height={2}
+          fill="hsl(0, 0%, 30%)"
+          cornerRadius={0.5}
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Reach mast (telescopic)
+      elements.push(
+        <Rect
+          key={`rt-mast-${rt.id}`}
+          x={rt.x + 3}
+          y={rt.y - 6}
+          width={1.5}
+          height={8}
+          fill="hsl(0, 0%, 25%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Extended reach mechanism
+      elements.push(
+        <Rect
+          key={`rt-reach-${rt.id}`}
+          x={rt.x + 4.5}
+          y={rt.y - 1.5}
+          width={2}
+          height={3}
+          fill="hsl(0, 0%, 35%)"
+          cornerRadius={0.5}
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Long reach forks
+      elements.push(
+        <Rect
+          key={`rt-fork1-${rt.id}`}
+          x={rt.x + 6.5}
+          y={rt.y - 0.8}
+          width={3}
+          height={0.5}
+          fill="hsl(0, 0%, 40%)"
+          opacity={opacity * 0.9}
         />
       );
       elements.push(
-        <Line
-          key={`rt-arm2-${rt.id}`}
-          points={[rt.x - 4, rt.y + 1, rt.x - 6, rt.y + 1]}
-          stroke="hsl(0, 0%, 100%)"
-          strokeWidth={1}
-          opacity={opacity * 0.8}
+        <Rect
+          key={`rt-fork2-${rt.id}`}
+          x={rt.x + 6.5}
+          y={rt.y + 0.3}
+          width={3}
+          height={0.5}
+          fill="hsl(0, 0%, 40%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Wheels
+      elements.push(
+        <Circle
+          key={`rt-wheel1-${rt.id}`}
+          x={rt.x - 2}
+          y={rt.y + 2}
+          radius={1.2}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      elements.push(
+        <Circle
+          key={`rt-wheel2-${rt.id}`}
+          x={rt.x + 2}
+          y={rt.y + 2}
+          radius={1.2}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
         />
       );
 
@@ -738,26 +914,120 @@ function WarehouseCanvas({
         />
       );
 
-      // AGV icon (lightning bolt for automated vehicle)
+      // Professional AGV (Automated Guided Vehicle) icon
+      // Main platform
       elements.push(
-        <Line
-          key={`agv-lightning-${agv.id}`}
-          points={[agv.x - 2, agv.y - 3, agv.x - 1, agv.y - 1, agv.x + 1, agv.y - 1, agv.x + 2, agv.y + 3]}
-          stroke="hsl(0, 0%, 100%)"
-          strokeWidth={1.5}
+        <Rect
+          key={`agv-platform-${agv.id}`}
+          x={agv.x - 4}
+          y={agv.y - 2}
+          width={8}
+          height={4}
+          fill="hsl(0, 0%, 20%)"
+          cornerRadius={2}
           opacity={opacity * 0.9}
         />
       );
       
-      // AGV automation indicator (small circle)
+      // Sensor array on top
+      elements.push(
+        <Rect
+          key={`agv-sensors-${agv.id}`}
+          x={agv.x - 2}
+          y={agv.y - 3}
+          width={4}
+          height={1}
+          fill="hsl(0, 0%, 35%)"
+          cornerRadius={0.5}
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Navigation sensors (small circles)
       elements.push(
         <Circle
-          key={`agv-indicator-${agv.id}`}
+          key={`agv-sensor1-${agv.id}`}
+          x={agv.x - 1.5}
+          y={agv.y - 2.5}
+          radius={0.3}
+          fill="hsl(120, 100%, 50%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      elements.push(
+        <Circle
+          key={`agv-sensor2-${agv.id}`}
           x={agv.x}
-          y={agv.y}
-          radius={1}
-          fill="hsl(0, 0%, 100%)"
-          opacity={opacity * 0.8}
+          y={agv.y - 2.5}
+          radius={0.3}
+          fill="hsl(60, 100%, 50%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      elements.push(
+        <Circle
+          key={`agv-sensor3-${agv.id}`}
+          x={agv.x + 1.5}
+          y={agv.y - 2.5}
+          radius={0.3}
+          fill="hsl(0, 100%, 50%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Load platform area
+      elements.push(
+        <Rect
+          key={`agv-load-area-${agv.id}`}
+          x={agv.x - 3}
+          y={agv.y - 1}
+          width={6}
+          height={2}
+          fill="hsl(0, 0%, 30%)"
+          cornerRadius={0.5}
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // Omnidirectional wheels
+      elements.push(
+        <Circle
+          key={`agv-wheel1-${agv.id}`}
+          x={agv.x - 3}
+          y={agv.y + 2}
+          radius={0.8}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      elements.push(
+        <Circle
+          key={`agv-wheel2-${agv.id}`}
+          x={agv.x + 3}
+          y={agv.y + 2}
+          radius={0.8}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      elements.push(
+        <Circle
+          key={`agv-wheel3-${agv.id}`}
+          x={agv.x - 3}
+          y={agv.y - 2}
+          radius={0.8}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
+        />
+      );
+      elements.push(
+        <Circle
+          key={`agv-wheel4-${agv.id}`}
+          x={agv.x + 3}
+          y={agv.y - 2}
+          radius={0.8}
+          fill="hsl(0, 0%, 15%)"
+          opacity={opacity * 0.9}
         />
       );
 
