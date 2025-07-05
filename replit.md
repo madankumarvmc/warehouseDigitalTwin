@@ -31,7 +31,7 @@ This is a React-based warehouse visibility demonstration system built with TypeS
 
 ### Warehouse Visualization Engine
 - **Interactive Canvas**: Pan and zoom capabilities with smooth 30 FPS rendering
-- **Grid Layout**: 5-aisle warehouse with 240 bin faces (5 aisles × 12 bins × 2 levels × 2 depth)
+- **Grid Layout**: 6-aisle warehouse with 288 bin faces (6 aisles × 12 bins × 2 levels × 2 depth)
 - **Cell Addressing**: Structured format: {Aisle}-{Bin}-{Level}-{Depth} (e.g., "A2-B37-L2-D1")
 
 ### Heatmap System
@@ -133,6 +133,12 @@ Changelog:
   * Color-coded trails: orange for loaded movement, white for unloaded
   * Background dims when resource selected for focused tracking
   * Trail data based on time range selection (15 min - 24 hours)
+- July 05, 2025. Expanded warehouse layout with additional aisle:
+  * Added 6th aisle (A6) to warehouse configuration
+  * Updated warehouse from 240 to 288 bin faces (6 aisles × 12 bins × 2 levels × 2 depth)
+  * Adjusted all movement simulation logic to accommodate new aisle range
+  * Updated BOPT traversal patterns for wider warehouse layout
+  * Enhanced heatmap generation to include new aisle in calculations
 ```
 
 ## User Preferences

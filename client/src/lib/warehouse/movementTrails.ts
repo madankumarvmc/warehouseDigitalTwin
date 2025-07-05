@@ -121,14 +121,14 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   }
   
   // Generate new trail data (extending existing if needed)
-  const primaryAisle = parseInt(forkliftId.split('-')[1]) % 5;
+  const primaryAisle = parseInt(forkliftId.split('-')[1]) % warehouseLayout.aisles.length;
   const seed = forkliftId.charCodeAt(forkliftId.length - 1) + 1000; // Fixed seed for consistency
   const random = new SeededRandom(seed);
   
   const warehouseZones = getWarehouseZones();
   const startingZones = [
     ...Object.values(warehouseZones),
-    ...Array.from({length: 5}, (_, i) => {
+    ...Array.from({length: warehouseLayout.aisles.length}, (_, i) => {
       const center = getAisleCenter(i);
       return { x: center.x, y: center.y + (random.next() - 0.5) * 200, id: `AISLE-${i}` };
     })
@@ -197,7 +197,7 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
     
     // Realistic movement patterns
     if (random.next() < 0.6) {
-      const targetAisle = random.next() < 0.7 ? primaryAisle : Math.floor(random.next() * 5);
+      const targetAisle = random.next() < 0.7 ? primaryAisle : Math.floor(random.next() * warehouseLayout.aisles.length);
       const aisleData = getRandomCellInAisle(targetAisle);
       nextLocation = { x: aisleData.x, y: aisleData.y, id: aisleData.cellId };
     } else {
@@ -430,7 +430,7 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
   };
   
   // Starting position and state
-  let currentAisle = Math.floor(random.next() * 5); // Start in random aisle
+  let currentAisle = Math.floor(random.next() * warehouseLayout.aisles.length); // Start in random aisle
   let currentBin = Math.floor(random.next() * 12);
   let isLoaded = false;
   let waypointCount = 0;
@@ -438,7 +438,7 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
   while (currentTime < now && waypointCount < 15) {
     let x: number, y: number, locationId: string;
     let dwellTime: number;
-    let nextAisle: number, nextBin: number;
+    let nextAisle: number = currentAisle, nextBin: number = currentBin;
     
     if (isForklift) {
       // FORKLIFTS: Realistic rack movement with proper sequencing
@@ -448,11 +448,11 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
       if (random.next() < 0.8) {
         // Move to adjacent aisle or same aisle different bin
         const aisleChange = Math.floor(random.next() * 3) - 1; // -1, 0, or 1
-        nextAisle = Math.max(0, Math.min(4, currentAisle + aisleChange));
+        nextAisle = Math.max(0, Math.min(warehouseLayout.aisles.length - 1, currentAisle + aisleChange));
         nextBin = Math.floor(random.next() * 12);
       } else {
         // Occasionally move to distant aisle (repositioning)
-        nextAisle = Math.floor(random.next() * 5);
+        nextAisle = Math.floor(random.next() * warehouseLayout.aisles.length);
         nextBin = Math.floor(random.next() * 12);
       }
       
@@ -541,7 +541,7 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
       loaded: isLoaded,
       timestamp: currentTime,
       locationId,
-      action: waypointCount === 0 ? 'start' : (isLoaded ? 'pickup' : 'dropoff')
+      action: waypointCount === 0 ? 'transit' : (isLoaded ? 'pickup' : 'dropoff')
     });
     
     // Add dwell time for operations

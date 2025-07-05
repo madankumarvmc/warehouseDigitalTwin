@@ -455,13 +455,13 @@ export class ResourceSimulator {
       // Full warehouse width traversal - go to opposite side
       if (bopt.x < maxX / 2) {
         // Currently on left side, move to right side of warehouse
-        const rightSideAisles = [3, 4]; // Right side aisles
+        const rightSideAisles = [Math.floor(warehouseConfig.aisles.length / 2), warehouseConfig.aisles.length - 1]; // Right side aisles
         const targetAisle = rightSideAisles[Math.floor(Math.random() * rightSideAisles.length)];
         bopt.targetX = 80 + (targetAisle * 120);
         bopt.direction = 'right';
       } else {
         // Currently on right side, move to left side of warehouse
-        const leftSideAisles = [0, 1]; // Left side aisles
+        const leftSideAisles = [0, Math.floor(warehouseConfig.aisles.length / 2) - 1]; // Left side aisles
         const targetAisle = leftSideAisles[Math.floor(Math.random() * leftSideAisles.length)];
         bopt.targetX = 80 + (targetAisle * 120);
         bopt.direction = 'left';
