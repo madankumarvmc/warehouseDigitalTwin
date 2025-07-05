@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Stage, Layer, Rect, Circle, Line, Text } from 'react-konva';
 import Konva from 'konva';
 import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
-import { HeatmapData, ForkliftResource, BOPTResource, ViewportState } from '@/lib/warehouse/types';
+import { HeatmapData, ForkliftResource, BOPTResource, ReachTruckResource, AGVResource, ViewportState } from '@/lib/warehouse/types';
 import { heatmapColors } from '@/lib/warehouse/heatmapGenerator';
 import { getResourceTrail } from '@/lib/warehouse/movementTrails';
 
@@ -10,6 +10,8 @@ interface WarehouseCanvasProps {
   heatmapData: HeatmapData[];
   forklifts: ForkliftResource[];
   bopts: BOPTResource[];
+  reachTrucks: ReachTruckResource[];
+  agvs: AGVResource[];
   activeLayers: Record<string, boolean>;
   activeHeatmapType: string;
   layerOpacity: Record<string, number>;
@@ -26,6 +28,8 @@ function WarehouseCanvas({
   heatmapData,
   forklifts,
   bopts,
+  reachTrucks,
+  agvs,
   activeLayers,
   activeHeatmapType,
   layerOpacity,
@@ -431,19 +435,54 @@ function WarehouseCanvas({
       const hasSelection = selectedResource !== null;
       const opacity = hasSelection && !isSelected ? 0.3 : 1;
       
-      // Forklift body (circular)
+      // Forklift body (circular with industrial truck icon)
       elements.push(
         <Circle
           key={`forklift-${forklift.id}`}
           x={forklift.x}
           y={forklift.y}
           radius={isSelected ? 12 : 8}
-          fill={forklift.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(122, 39%, 49%)'}
+          fill={forklift.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(39, 100%, 50%)'}
           stroke={isSelected ? 'hsl(207, 90%, 54%)' : 'transparent'}
           strokeWidth={2}
           opacity={opacity}
           onClick={() => onResourceSelect(forklift.id)}
           onTap={() => onResourceSelect(forklift.id)}
+        />
+      );
+
+      // Industrial truck icon (simple representation)
+      elements.push(
+        <Rect
+          key={`forklift-icon-${forklift.id}`}
+          x={forklift.x - 4}
+          y={forklift.y - 3}
+          width={8}
+          height={6}
+          fill="hsl(0, 0%, 100%)"
+          opacity={opacity * 0.8}
+        />
+      );
+      
+      // Truck wheels
+      elements.push(
+        <Circle
+          key={`forklift-wheel1-${forklift.id}`}
+          x={forklift.x - 3}
+          y={forklift.y + 2}
+          radius={1.5}
+          fill="hsl(0, 0%, 20%)"
+          opacity={opacity * 0.8}
+        />
+      );
+      elements.push(
+        <Circle
+          key={`forklift-wheel2-${forklift.id}`}
+          x={forklift.x + 3}
+          y={forklift.y + 2}
+          radius={1.5}
+          fill="hsl(0, 0%, 20%)"
+          opacity={opacity * 0.8}
         />
       );
 
@@ -510,6 +549,40 @@ function WarehouseCanvas({
         />
       );
 
+      // Industrial package icon (simple representation)
+      elements.push(
+        <Rect
+          key={`bopt-package-${bopt.id}`}
+          x={bopt.x - 3}
+          y={bopt.y - 3}
+          width={6}
+          height={6}
+          fill="hsl(0, 0%, 100%)"
+          cornerRadius={1}
+          opacity={opacity * 0.8}
+        />
+      );
+      
+      // Package detail lines
+      elements.push(
+        <Line
+          key={`bopt-line1-${bopt.id}`}
+          points={[bopt.x - 1, bopt.y - 1, bopt.x + 1, bopt.y - 1]}
+          stroke="hsl(0, 0%, 20%)"
+          strokeWidth={0.5}
+          opacity={opacity * 0.8}
+        />
+      );
+      elements.push(
+        <Line
+          key={`bopt-line2-${bopt.id}`}
+          points={[bopt.x - 1, bopt.y + 1, bopt.x + 1, bopt.y + 1]}
+          stroke="hsl(0, 0%, 20%)"
+          strokeWidth={0.5}
+          opacity={opacity * 0.8}
+        />
+      );
+
       // Load indicator for BOPTs
       if (bopt.loaded) {
         elements.push(
@@ -544,6 +617,184 @@ function WarehouseCanvas({
 
     return elements;
   }, [activeLayers.resources, bopts, selectedResource, onResourceSelect]);
+
+  // Render Reach Trucks
+  const renderReachTrucks = useCallback(() => {
+    if (!activeLayers.resources) return [];
+
+    const elements: any[] = [];
+    reachTrucks.forEach(rt => {
+      const isSelected = selectedResource === rt.id;
+      const hasSelection = selectedResource !== null;
+      const opacity = hasSelection && !isSelected ? 0.3 : 1;
+      
+      // Reach Truck body (diamond shape to distinguish from forklifts)
+      elements.push(
+        <Circle
+          key={`rt-${rt.id}`}
+          x={rt.x}
+          y={rt.y}
+          radius={isSelected ? 12 : 8}
+          fill={rt.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(122, 89%, 40%)'}
+          stroke={isSelected ? 'hsl(207, 90%, 54%)' : 'transparent'}
+          strokeWidth={2}
+          opacity={opacity}
+          onClick={() => onResourceSelect(rt.id)}
+          onTap={() => onResourceSelect(rt.id)}
+        />
+      );
+
+      // Reach Truck icon (with extended reach arms)
+      elements.push(
+        <Rect
+          key={`rt-body-${rt.id}`}
+          x={rt.x - 3}
+          y={rt.y - 2}
+          width={6}
+          height={4}
+          fill="hsl(0, 0%, 100%)"
+          opacity={opacity * 0.8}
+        />
+      );
+      
+      // Reach arms (extended forks)
+      elements.push(
+        <Line
+          key={`rt-arm1-${rt.id}`}
+          points={[rt.x - 4, rt.y - 1, rt.x - 6, rt.y - 1]}
+          stroke="hsl(0, 0%, 100%)"
+          strokeWidth={1}
+          opacity={opacity * 0.8}
+        />
+      );
+      elements.push(
+        <Line
+          key={`rt-arm2-${rt.id}`}
+          points={[rt.x - 4, rt.y + 1, rt.x - 6, rt.y + 1]}
+          stroke="hsl(0, 0%, 100%)"
+          strokeWidth={1}
+          opacity={opacity * 0.8}
+        />
+      );
+
+      // Load indicator
+      if (rt.loaded) {
+        elements.push(
+          <Rect
+            key={`rt-load-${rt.id}`}
+            x={rt.x - 4}
+            y={rt.y - 12}
+            width={8}
+            height={4}
+            fill="hsl(4, 90%, 58%)"
+            opacity={opacity}
+          />
+        );
+      }
+
+      // RT ID
+      elements.push(
+        <Text
+          key={`rt-id-${rt.id}`}
+          x={rt.x}
+          y={rt.y + 15}
+          text={rt.id}
+          fontSize={10}
+          fontFamily="Roboto"
+          fill="hsl(0, 0%, 88.2%)"
+          align="center"
+          offsetX={15}
+          opacity={opacity}
+        />
+      );
+    });
+
+    return elements;
+  }, [activeLayers.resources, reachTrucks, selectedResource, onResourceSelect]);
+
+  // Render AGVs
+  const renderAGVs = useCallback(() => {
+    if (!activeLayers.resources) return [];
+
+    const elements: any[] = [];
+    agvs.forEach(agv => {
+      const isSelected = selectedResource === agv.id;
+      const hasSelection = selectedResource !== null;
+      const opacity = hasSelection && !isSelected ? 0.3 : 1;
+      
+      // AGV body (hexagon shape to distinguish from others)
+      elements.push(
+        <Circle
+          key={`agv-${agv.id}`}
+          x={agv.x}
+          y={agv.y}
+          radius={isSelected ? 12 : 8}
+          fill={agv.loaded ? 'hsl(39, 100%, 50%)' : 'hsl(200, 89%, 60%)'}
+          stroke={isSelected ? 'hsl(207, 90%, 54%)' : 'transparent'}
+          strokeWidth={2}
+          opacity={opacity}
+          onClick={() => onResourceSelect(agv.id)}
+          onTap={() => onResourceSelect(agv.id)}
+        />
+      );
+
+      // AGV icon (lightning bolt for automated vehicle)
+      elements.push(
+        <Line
+          key={`agv-lightning-${agv.id}`}
+          points={[agv.x - 2, agv.y - 3, agv.x - 1, agv.y - 1, agv.x + 1, agv.y - 1, agv.x + 2, agv.y + 3]}
+          stroke="hsl(0, 0%, 100%)"
+          strokeWidth={1.5}
+          opacity={opacity * 0.9}
+        />
+      );
+      
+      // AGV automation indicator (small circle)
+      elements.push(
+        <Circle
+          key={`agv-indicator-${agv.id}`}
+          x={agv.x}
+          y={agv.y}
+          radius={1}
+          fill="hsl(0, 0%, 100%)"
+          opacity={opacity * 0.8}
+        />
+      );
+
+      // Load indicator
+      if (agv.loaded) {
+        elements.push(
+          <Rect
+            key={`agv-load-${agv.id}`}
+            x={agv.x - 4}
+            y={agv.y - 12}
+            width={8}
+            height={4}
+            fill="hsl(4, 90%, 58%)"
+            opacity={opacity}
+          />
+        );
+      }
+
+      // AGV ID
+      elements.push(
+        <Text
+          key={`agv-id-${agv.id}`}
+          x={agv.x}
+          y={agv.y + 15}
+          text={agv.id}
+          fontSize={10}
+          fontFamily="Roboto"
+          fill="hsl(0, 0%, 88.2%)"
+          align="center"
+          offsetX={15}
+          opacity={opacity}
+        />
+      );
+    });
+
+    return elements;
+  }, [activeLayers.resources, agvs, selectedResource, onResourceSelect]);
 
   // Optimized zoom with immediate response and minimal re-renders
   const handleWheel = useCallback((e: any) => {
@@ -618,6 +869,8 @@ function WarehouseCanvas({
           {renderResourceTrails()}
           {renderForklifts()}
           {renderBOPTs()}
+          {renderReachTrucks()}
+          {renderAGVs()}
         </Layer>
       </Stage>
     </div>

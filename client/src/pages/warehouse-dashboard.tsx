@@ -175,6 +175,8 @@ function WarehouseDashboard() {
                 heatmapData={heatmapViewVisible ? heatmapData : []}
                 forklifts={liveResourcesViewVisible ? forklifts : []}
                 bopts={liveResourcesViewVisible ? bopts : []}
+                reachTrucks={liveResourcesViewVisible ? reachTrucks : []}
+                agvs={liveResourcesViewVisible ? agvs : []}
                 activeLayers={activeLayers}
                 activeHeatmapType={activeHeatmapType}
                 layerOpacity={layerOpacity}
