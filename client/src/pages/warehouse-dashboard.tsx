@@ -235,13 +235,16 @@ function WarehouseDashboard() {
 
             {/* Minimap Panel */}
             {!rightSidebarCollapsed && (
-              <MinimapPanel
-                forklifts={forklifts}
-                activeHeatmap={activeHeatmapType}
-                sidebarCollapsed={sidebarCollapsed}
-                isCollapsed={false}
-                onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
-              />
+              <>
+                {console.log('Rendering expanded MinimapPanel')}
+                <MinimapPanel
+                  forklifts={forklifts}
+                  activeHeatmap={activeHeatmapType}
+                  sidebarCollapsed={sidebarCollapsed}
+                  isCollapsed={false}
+                  onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+                />
+              </>
             )}
           </div>
 
