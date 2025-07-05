@@ -88,6 +88,15 @@ function getAisleCenter(aisleIndex: number): { x: number, y: number } {
   return { x, y: 300 }; // Middle of warehouse height
 }
 
+// Get transverse aisle center position for cross-aisle movement
+function getTransverseAisleCenter(): { x: number, y: number } {
+  const { transverseAislePosition, cellHeight, levels, dockOffset, aisles, cellWidth, aisleWidth, transverseAisleWidth } = warehouseLayout;
+  const upperSectionHeight = transverseAislePosition * cellHeight * levels;
+  const y = upperSectionHeight + (transverseAisleWidth / 2);
+  const x = dockOffset + (aisles.length * (cellWidth * 2 + aisleWidth)) / 2;
+  return { x, y };
+}
+
 // Get random cell in specific aisle
 function getRandomCellInAisle(aisleIndex: number): { x: number, y: number, cellId: string } {
   const aisleCells = warehouseLayout.cells.filter(cell => 
@@ -126,12 +135,15 @@ function generateForkliftTrail(forkliftId: string, timeRange: number): TrailPoin
   const random = new SeededRandom(seed);
   
   const warehouseZones = getWarehouseZones();
+  const transverseCenter = getTransverseAisleCenter();
   const startingZones = [
     ...Object.values(warehouseZones),
     ...Array.from({length: warehouseLayout.aisles.length}, (_, i) => {
       const center = getAisleCenter(i);
       return { x: center.x, y: center.y + (random.next() - 0.5) * 200, id: `AISLE-${i}` };
-    })
+    }),
+    // Add transverse aisle as a starting/movement option
+    { x: transverseCenter.x + (random.next() - 0.5) * 200, y: transverseCenter.y, id: 'TRANSVERSE-AISLE' }
   ];
   
   let trail: TrailPoint[] = [];

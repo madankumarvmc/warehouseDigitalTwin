@@ -78,6 +78,8 @@ export interface WarehouseLayout {
   cellWidth: number;
   cellHeight: number;
   aisleWidth: number;
+  transverseAisleWidth: number;
+  transverseAislePosition: number;
   dockDoors: number;
   dockWidth: number;
   dockHeight: number;

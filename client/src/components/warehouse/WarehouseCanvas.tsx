@@ -267,6 +267,51 @@ function WarehouseCanvas({
       );
     });
 
+    // Render transverse aisle corridor
+    const warehouseConfig = warehouseLayout;
+    const upperSectionHeight = warehouseConfig.transverseAislePosition * warehouseConfig.cellHeight * warehouseConfig.levels;
+    const transverseY = upperSectionHeight;
+    const transverseWidth = warehouseConfig.aisles.length * (warehouseConfig.cellWidth * 2 + warehouseConfig.aisleWidth);
+    const transverseX = warehouseConfig.dockOffset;
+
+    // Add transverse aisle background
+    elements.push(
+      <Rect
+        key="transverse-aisle"
+        x={transverseX}
+        y={transverseY}
+        width={transverseWidth}
+        height={warehouseConfig.transverseAisleWidth}
+        fill={colors.stagingFree}
+        stroke={colors.binOutline}
+        strokeWidth={2}
+        strokeDasharray={[10, 5]} // Dashed line to indicate corridor
+        opacity={0.6}
+        perfectDrawEnabled={false}
+        listening={false}
+      />
+    );
+
+    // Add transverse aisle label
+    elements.push(
+      <Text
+        key="transverse-aisle-label"
+        x={transverseX + transverseWidth / 2}
+        y={transverseY + warehouseConfig.transverseAisleWidth / 2}
+        text="TRANSVERSE AISLE"
+        fontSize={12}
+        fontFamily="Roboto"
+        fill={colors.text}
+        align="center"
+        verticalAlign="middle"
+        offsetX={60}
+        offsetY={6}
+        opacity={0.8}
+        perfectDrawEnabled={false}
+        listening={false}
+      />
+    );
+
     return elements;
   }, [isInViewport, viewport.zoom, getThemeColors]);
 

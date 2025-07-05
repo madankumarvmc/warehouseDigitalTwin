@@ -8,6 +8,9 @@ export const warehouseConfig = {
   cellWidth: 40,
   cellHeight: 30,
   aisleWidth: 120,
+  // Transverse aisle configuration
+  transverseAisleWidth: 80, // Width of the horizontal corridor
+  transverseAislePosition: 6, // Between bin 6 and 7 (after dock 2, before dock 3)
   // Dock configuration
   dockDoors: 4,
   dockWidth: 60,
@@ -34,11 +37,16 @@ export function generateWarehouseLayout(): WarehouseLayout {
     dockOffset 
   } = warehouseConfig;
 
-  // Generate storage cells with adjusted X position to make room for docks
+  // Generate storage cells with transverse aisle - split into upper and lower sections
   for (let aisleIndex = 0; aisleIndex < warehouseConfig.aisles.length; aisleIndex++) {
     const aisleName = warehouseConfig.aisles[aisleIndex];
     
     for (let bin = 1; bin <= warehouseConfig.binsPerAisle; bin++) {
+      // Skip bins at transverse aisle position to create the horizontal corridor
+      if (bin === warehouseConfig.transverseAislePosition || bin === warehouseConfig.transverseAislePosition + 1) {
+        continue;
+      }
+      
       for (let level = 1; level <= warehouseConfig.levels; level++) {
         for (let depth = 1; depth <= warehouseConfig.depth; depth++) {
           const cellId = `${aisleName}-B${bin.toString().padStart(2, '0')}-L${level}-D${depth}`;
@@ -47,7 +55,19 @@ export function generateWarehouseLayout(): WarehouseLayout {
           const aisleX = dockOffset + aisleIndex * (cellWidth * 2 + aisleWidth);
           const rackSide = depth === 1 ? 0 : 1; // D1 = left side, D2 = right side
           const x = aisleX + rackSide * (cellWidth + aisleWidth);
-          const y = (bin - 1) * cellHeight + (level - 1) * cellHeight * warehouseConfig.binsPerAisle;
+          
+          // Adjust Y position based on whether bin is before or after transverse aisle
+          let y;
+          if (bin <= warehouseConfig.transverseAislePosition) {
+            // Upper section - bins 1 to transverseAislePosition
+            y = (bin - 1) * cellHeight + (level - 1) * cellHeight * warehouseConfig.transverseAislePosition;
+          } else {
+            // Lower section - bins after transverse aisle, with gap for corridor
+            const adjustedBin = bin - 2; // Account for the 2 bins removed for transverse aisle
+            const transverseGap = warehouseConfig.transverseAisleWidth;
+            const upperSectionHeight = warehouseConfig.transverseAislePosition * cellHeight * warehouseConfig.levels;
+            y = upperSectionHeight + transverseGap + (adjustedBin - warehouseConfig.transverseAislePosition) * cellHeight + (level - 1) * cellHeight * (warehouseConfig.binsPerAisle - warehouseConfig.transverseAislePosition - 2);
+          }
 
           cells.push({
             cellId,
@@ -66,7 +86,10 @@ export function generateWarehouseLayout(): WarehouseLayout {
   }
 
   // Generate dock doors on the left side
-  const totalWarehouseHeight = warehouseConfig.binsPerAisle * warehouseConfig.levels * cellHeight;
+  // Calculate total warehouse height including transverse aisle
+  const upperSectionHeight = warehouseConfig.transverseAislePosition * cellHeight * warehouseConfig.levels;
+  const lowerSectionHeight = (warehouseConfig.binsPerAisle - warehouseConfig.transverseAislePosition - 2) * cellHeight * warehouseConfig.levels;
+  const totalWarehouseHeight = upperSectionHeight + warehouseConfig.transverseAisleWidth + lowerSectionHeight;
   const dockSpacing = totalWarehouseHeight / dockDoors;
   
   for (let i = 0; i < dockDoors; i++) {

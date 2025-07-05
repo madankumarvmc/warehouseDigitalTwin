@@ -31,7 +31,8 @@ This is a React-based warehouse visibility demonstration system built with TypeS
 
 ### Warehouse Visualization Engine
 - **Interactive Canvas**: Pan and zoom capabilities with smooth 30 FPS rendering
-- **Grid Layout**: 6-aisle warehouse with 288 bin faces (6 aisles × 12 bins × 2 levels × 2 depth)
+- **Grid Layout**: 6-aisle warehouse with transverse corridor and 240 bin faces (6 aisles × 10 bins × 2 levels × 2 depth)
+- **Transverse Aisle**: Horizontal corridor between storage sections for cross-aisle movement
 - **Cell Addressing**: Structured format: {Aisle}-{Bin}-{Level}-{Depth} (e.g., "A2-B37-L2-D1")
 
 ### Heatmap System
@@ -139,6 +140,13 @@ Changelog:
   * Adjusted all movement simulation logic to accommodate new aisle range
   * Updated BOPT traversal patterns for wider warehouse layout
   * Enhanced heatmap generation to include new aisle in calculations
+- July 05, 2025. Implemented transverse aisle for cross-warehouse movement:
+  * Added horizontal corridor between bins 6 and 7 (between dock 2 and 3)
+  * Split warehouse into upper and lower storage sections with 80px corridor
+  * Updated warehouse layout from 288 to 240 storage faces due to corridor space
+  * Enhanced resource movement patterns to utilize transverse aisle for cross-aisle travel
+  * Added visual rendering of transverse corridor with dashed outline and labeling
+  * Updated movement simulation to include transverse aisle as movement zone
 ```
 
 ## User Preferences
