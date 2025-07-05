@@ -258,7 +258,10 @@ function WarehouseDashboard() {
             activeHeatmap={activeHeatmapType}
             sidebarCollapsed={sidebarCollapsed}
             isCollapsed={true}
-            onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+            onToggle={() => {
+              console.log('Toggle called, current state:', rightSidebarCollapsed);
+              setRightSidebarCollapsed(!rightSidebarCollapsed);
+            }}
           />
         )}
       </div>
