@@ -81,21 +81,26 @@ function getWarehouseZones() {
   };
 }
 
-// Get aisle centers for realistic movement patterns
+// Get aisle centers for realistic movement patterns - HORIZONTAL AISLES
 function getAisleCenter(aisleIndex: number): { x: number, y: number } {
-  const { aisleWidth, cellWidth, dockOffset } = warehouseLayout;
-  const x = dockOffset + aisleIndex * (cellWidth * 2 + aisleWidth) + cellWidth + (aisleWidth / 2);
-  return { x, y: 300 }; // Middle of warehouse height
+  const { aisleWidth, cellWidth, cellHeight, levels, depth } = warehouseLayout;
+  const x = 100 + (warehouseLayout.binsPerAisle * cellWidth) / 2; // Middle of horizontal aisle
+  const y = 80 + aisleIndex * (cellHeight * levels * depth + aisleWidth) + (cellHeight * levels * depth) / 2;
+  return { x, y };
 }
 
-// Get random cell in specific aisle
+// Get random cell in specific aisle - HORIZONTAL LAYOUT
 function getRandomCellInAisle(aisleIndex: number): { x: number, y: number, cellId: string } {
+  const aisleNames = ['A1', 'A2', 'A3', 'A4', 'A5'];
+  const aisleName = aisleNames[aisleIndex];
+  
   const aisleCells = warehouseLayout.cells.filter(cell => 
-    cell.aisle === String.fromCharCode(65 + aisleIndex) // A, B, C, D, E
+    cell.aisle === aisleName
   );
+  
   if (aisleCells.length === 0) {
     const center = getAisleCenter(aisleIndex);
-    return { x: center.x, y: center.y, cellId: `${String.fromCharCode(65 + aisleIndex)}-UNKNOWN` };
+    return { x: center.x, y: center.y, cellId: `${aisleName}-UNKNOWN` };
   }
   
   const randomCell = aisleCells[Math.floor(Math.random() * aisleCells.length)];
@@ -422,28 +427,32 @@ export function getResourceTrail(resourceId: string, timeRange: number): TrailPo
     let x: number, y: number, locationId: string;
     
     if (isForklift) {
-      // FORKLIFTS: Move only in RACK areas (aisles A1-A5) - DETERMINISTIC
+      // FORKLIFTS: Move only in RACK areas (aisles A1-A5) - HORIZONTAL LAYOUT
       const aisleIndex = i % 5; // Cycle through 5 aisles
       const binIndex = Math.floor(random.next() * 12); // Seeded random for consistency
       const level = Math.floor(random.next() * 2) + 1; // L1 or L2
       const depth = Math.floor(random.next() * 2) + 1; // D1 or D2
       
-      // Aisle positions: A1=x:150, A2=x:250, A3=x:350, A4=x:450, A5=x:550
-      x = 150 + (aisleIndex * 100);
-      y = 100 + (binIndex * 40); // Bins spaced 40 units apart
+      // HORIZONTAL layout: bins arranged left-to-right, aisles stacked vertically
+      x = 100 + binIndex * 50; // Bins arranged horizontally
+      const baseY = 80 + aisleIndex * (40 * 2 * 2 + 80); // Aisle spacing
+      const levelOffset = (level - 1) * 40;
+      const depthOffset = depth === 1 ? 0 : 40 * 2 + 10;
+      y = baseY + levelOffset + depthOffset;
       locationId = `A${aisleIndex + 1}-B${binIndex + 1}-L${level}-D${depth}`;
       
     } else if (isBOPT) {
-      // BOPTs: Move between RACKS and STAGING/DOCK areas - DETERMINISTIC
+      // BOPTs: Move between RACKS and STAGING/DOCK areas - HORIZONTAL LAYOUT
       if (i < 6) {
         // First half: Move in racks for picking
         const aisleIndex = Math.floor(random.next() * 5);
         const binIndex = Math.floor(random.next() * 12);
-        x = 150 + (aisleIndex * 100);
-        y = 100 + (binIndex * 40);
+        x = 100 + binIndex * 50; // Horizontal bins
+        const baseY = 80 + aisleIndex * (40 * 2 * 2 + 80);
+        y = baseY + 20; // Middle of aisle
         locationId = `A${aisleIndex + 1}-B${binIndex + 1}`;
       } else {
-        // Second half: Move to staging/dock areas
+        // Second half: Move to staging/dock areas (at bottom of warehouse)
         const zones = getWarehouseZones();
         const stagingDockZones = [zones.STAGING_1, zones.STAGING_2, zones.RECEIVING, zones.SHIPPING];
         const zone = stagingDockZones[(i - 6) % stagingDockZones.length];
