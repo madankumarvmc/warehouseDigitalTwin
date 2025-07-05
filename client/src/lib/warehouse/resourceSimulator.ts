@@ -7,11 +7,27 @@ export class ResourceSimulator {
   private animationId: number | null = null;
   private listeners: ((resources: { forklifts: ForkliftResource[], bopts: BOPTResource[] }) => void)[] = [];
   private lastUpdateTime: number = 0;
-  private readonly UPDATE_INTERVAL = 3000; // Update every 3 seconds for better performance
+  private readonly UPDATE_INTERVAL = 1000; // Check every second for resource scheduling
+  private resourceSchedule: Map<string, number> = new Map(); // Track next move time for each resource
 
   constructor() {
     this.initializeForklifts();
     this.initializeBOPTs();
+    this.initializeResourceSchedule();
+  }
+
+  private initializeResourceSchedule() {
+    const now = Date.now();
+    // Stagger initial movement times for realistic warehouse operations
+    this.forklifts.forEach((forklift, index) => {
+      // Spread forklift movements over 25-35 seconds
+      this.resourceSchedule.set(forklift.id, now + (index * 8000) + Math.random() * 10000);
+    });
+    
+    this.bopts.forEach((bopt, index) => {
+      // Spread BOPT movements over 30-40 seconds  
+      this.resourceSchedule.set(bopt.id, now + (index * 10000) + Math.random() * 15000);
+    });
   }
 
   private initializeForklifts() {
@@ -166,17 +182,43 @@ export class ResourceSimulator {
 
   private updatePositions() {
     const now = Date.now();
+    let resourcesMovedThisCycle = 0;
+    const maxResourcesPerCycle = 3; // Maximum 3 resources can move simultaneously
     
-    // Update forklifts (vertical movement in aisles)
+    // Check forklifts for scheduled movements
     this.forklifts.forEach(forklift => {
-      this.updateResourceTrail(forklift, now);
-      this.updateForkliftPosition(forklift);
+      const nextMoveTime = this.resourceSchedule.get(forklift.id) || 0;
+      
+      if (now >= nextMoveTime && resourcesMovedThisCycle < maxResourcesPerCycle) {
+        // Time for this forklift to move
+        this.updateForkliftPosition(forklift);
+        this.updateResourceTrail(forklift, now);
+        
+        // Schedule next movement in 25-35 seconds (realistic forklift operation)
+        const nextMove = now + 25000 + Math.random() * 10000;
+        this.resourceSchedule.set(forklift.id, nextMove);
+        
+        resourcesMovedThisCycle++;
+        console.log(`${forklift.id} moved, next move in ${Math.round((nextMove - now) / 1000)}s`);
+      }
     });
 
-    // Update BOPTs (horizontal movement across aisles)
+    // Check BOPTs for scheduled movements
     this.bopts.forEach(bopt => {
-      this.updateResourceTrail(bopt, now);
-      this.updateBOPTPosition(bopt);
+      const nextMoveTime = this.resourceSchedule.get(bopt.id) || 0;
+      
+      if (now >= nextMoveTime && resourcesMovedThisCycle < maxResourcesPerCycle) {
+        // Time for this BOPT to move
+        this.updateBOPTPosition(bopt);
+        this.updateResourceTrail(bopt, now);
+        
+        // Schedule next movement in 30-45 seconds (realistic BOPT operation)
+        const nextMove = now + 30000 + Math.random() * 15000;
+        this.resourceSchedule.set(bopt.id, nextMove);
+        
+        resourcesMovedThisCycle++;
+        console.log(`${bopt.id} moved, next move in ${Math.round((nextMove - now) / 1000)}s`);
+      }
     });
   }
 
@@ -267,39 +309,69 @@ export class ResourceSimulator {
   private setNewForkliftTarget(forklift: ForkliftResource) {
     const maxY = warehouseConfig.binsPerAisle * warehouseConfig.cellHeight;
     
-    // Occasionally switch aisles for more dynamic movement
-    if (Math.random() < 0.3) {
-      const newAisle = Math.floor(Math.random() * warehouseConfig.aisles.length);
-      forklift.currentAisle = newAisle;
+    // Realistic warehouse movement: stay in current aisle 90% of time
+    if (Math.random() < 0.1) {
+      // Occasionally switch to adjacent aisle only
+      const currentAisle = forklift.currentAisle || 0;
+      const adjacentAisles = [
+        Math.max(0, currentAisle - 1),
+        Math.min(warehouseConfig.aisles.length - 1, currentAisle + 1)
+      ];
+      forklift.currentAisle = adjacentAisles[Math.floor(Math.random() * adjacentAisles.length)];
     }
     
-    // Set target to opposite end of current aisle
-    if (forklift.y < maxY / 2) {
-      forklift.targetY = maxY - 50; // Go to bottom
+    // Move to nearby bin (realistic 2-4 bin distance, not across entire aisle)
+    const currentBin = Math.floor(forklift.y / warehouseConfig.cellHeight);
+    const maxBins = Math.floor(maxY / warehouseConfig.cellHeight);
+    
+    // Move 2-4 bins away in a logical direction
+    const moveDistance = 2 + Math.floor(Math.random() * 3); // 2-4 bins
+    let targetBin;
+    
+    if (currentBin < maxBins / 2) {
+      // In first half, move down the aisle
+      targetBin = Math.min(maxBins - 1, currentBin + moveDistance);
       forklift.direction = 'down';
     } else {
-      forklift.targetY = 50; // Go to top
+      // In second half, move up the aisle
+      targetBin = Math.max(0, currentBin - moveDistance);
       forklift.direction = 'up';
     }
+    
+    forklift.targetY = targetBin * warehouseConfig.cellHeight + 30;
   }
 
   private setNewBOPTTarget(bopt: BOPTResource) {
     const maxX = warehouseConfig.aisles.length * (warehouseConfig.cellWidth * 2 + warehouseConfig.aisleWidth);
     
-    // Occasionally change Y level for more dynamic movement
-    if (Math.random() < 0.4) {
-      const levels = [80, 140, 200, 280, 320];
+    // BOPTs move shorter distances between staging areas and nearby aisles
+    const currentAisle = Math.floor((bopt.x - 80) / 120); // Approximate current aisle
+    const maxAisle = warehouseConfig.aisles.length - 1;
+    
+    // Move to adjacent aisle or staging area (realistic 1-2 aisle movement)
+    let targetAisle;
+    if (Math.random() < 0.3) {
+      // 30% chance to go to staging area
+      const stagingAreas = [50, maxX - 50]; // Left or right staging
+      bopt.targetX = stagingAreas[Math.floor(Math.random() * stagingAreas.length)];
+    } else {
+      // 70% chance to move to adjacent aisle
+      const adjacentAisles = [
+        Math.max(0, currentAisle - 1),
+        Math.min(maxAisle, currentAisle + 1)
+      ];
+      targetAisle = adjacentAisles[Math.floor(Math.random() * adjacentAisles.length)];
+      bopt.targetX = 80 + (targetAisle * 120); // Aisle spacing
+    }
+    
+    // Occasionally change Y level for cross-aisle movement
+    if (Math.random() < 0.3) {
+      const levels = [120, 180, 240, 300]; // Warehouse levels
       bopt.targetY = levels[Math.floor(Math.random() * levels.length)];
     }
     
-    // Set target to opposite end horizontally
-    if (bopt.x < maxX / 2) {
-      bopt.targetX = maxX - 80; // Go to right
-      bopt.direction = 'right';
-    } else {
-      bopt.targetX = 80; // Go to left
-      bopt.direction = 'left';
-    }
+    // Set direction
+    bopt.direction = bopt.targetX > bopt.x ? 'right' : 'left';
   }
 
   addListener(callback: (resources: { forklifts: ForkliftResource[], bopts: BOPTResource[] }) => void) {
