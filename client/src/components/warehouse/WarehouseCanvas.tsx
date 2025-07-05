@@ -267,28 +267,7 @@ function WarehouseCanvas({
       );
     });
 
-    // Render transverse aisle corridor - clean open space without borders or text
-    const warehouseConfig = warehouseLayout;
-    const upperSectionHeight = warehouseConfig.transverseAislePosition * warehouseConfig.cellHeight * warehouseConfig.levels;
-    const transverseY = upperSectionHeight;
-    const transverseWidth = warehouseConfig.aisles.length * (warehouseConfig.cellWidth * 2 + warehouseConfig.aisleWidth);
-    const transverseX = warehouseConfig.dockOffset;
-
-    // Add transverse aisle as subtle background - no borders or text
-    elements.push(
-      <Rect
-        key="transverse-aisle"
-        x={transverseX}
-        y={transverseY}
-        width={transverseWidth}
-        height={warehouseConfig.transverseAisleWidth}
-        fill={colors.stagingFree}
-        stroke="none"
-        opacity={0.1}
-        perfectDrawEnabled={false}
-        listening={false}
-      />
-    );
+    // Transverse aisle is created by the missing bins - no visual rendering needed
 
     return elements;
   }, [isInViewport, viewport.zoom, getThemeColors]);
