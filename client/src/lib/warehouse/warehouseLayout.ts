@@ -58,15 +58,15 @@ export function generateWarehouseLayout(): WarehouseLayout {
           
           // Adjust Y position based on whether bin is before or after transverse aisle
           let y;
-          if (bin <= warehouseConfig.transverseAislePosition) {
-            // Upper section - bins 1 to transverseAislePosition
-            y = (bin - 1) * cellHeight + (level - 1) * cellHeight * warehouseConfig.transverseAislePosition;
+          if (bin < warehouseConfig.transverseAislePosition) {
+            // Upper section - bins 1 to (transverseAislePosition - 1)
+            y = (bin - 1) * cellHeight + (level - 1) * cellHeight * (warehouseConfig.transverseAislePosition - 1);
           } else {
             // Lower section - bins after transverse aisle, with gap for corridor
             const adjustedBin = bin - 2; // Account for the 2 bins removed for transverse aisle
             const transverseGap = warehouseConfig.transverseAisleWidth;
-            const upperSectionHeight = warehouseConfig.transverseAislePosition * cellHeight * warehouseConfig.levels;
-            y = upperSectionHeight + transverseGap + (adjustedBin - warehouseConfig.transverseAislePosition) * cellHeight + (level - 1) * cellHeight * (warehouseConfig.binsPerAisle - warehouseConfig.transverseAislePosition - 2);
+            const upperSectionHeight = (warehouseConfig.transverseAislePosition - 1) * cellHeight * warehouseConfig.levels;
+            y = upperSectionHeight + transverseGap + (adjustedBin - warehouseConfig.transverseAislePosition + 1) * cellHeight + (level - 1) * cellHeight * (warehouseConfig.binsPerAisle - warehouseConfig.transverseAislePosition - 1);
           }
 
           cells.push({
@@ -87,14 +87,22 @@ export function generateWarehouseLayout(): WarehouseLayout {
 
   // Generate dock doors on the left side
   // Calculate total warehouse height including transverse aisle
-  const upperSectionHeight = warehouseConfig.transverseAislePosition * cellHeight * warehouseConfig.levels;
-  const lowerSectionHeight = (warehouseConfig.binsPerAisle - warehouseConfig.transverseAislePosition - 2) * cellHeight * warehouseConfig.levels;
+  const upperSectionHeight = (warehouseConfig.transverseAislePosition - 1) * cellHeight * warehouseConfig.levels;
+  const lowerSectionHeight = (warehouseConfig.binsPerAisle - warehouseConfig.transverseAislePosition - 1) * cellHeight * warehouseConfig.levels;
   const totalWarehouseHeight = upperSectionHeight + warehouseConfig.transverseAisleWidth + lowerSectionHeight;
   const dockSpacing = totalWarehouseHeight / dockDoors;
   
+  // Distribute docks properly: 2 in upper section, 2 in lower section
+  const dock1Y = upperSectionHeight / 4;
+  const dock2Y = upperSectionHeight * 3 / 4;
+  const dock3Y = upperSectionHeight + warehouseConfig.transverseAisleWidth + lowerSectionHeight / 4;
+  const dock4Y = upperSectionHeight + warehouseConfig.transverseAisleWidth + lowerSectionHeight * 3 / 4;
+  
+  const dockPositions = [dock1Y, dock2Y, dock3Y, dock4Y];
+  
   for (let i = 0; i < dockDoors; i++) {
     const dockId = `DOCK-${i + 1}`;
-    const dockY = i * dockSpacing + (dockSpacing - dockHeight) / 2;
+    const dockY = dockPositions[i];
     
     dockDoorPositions.push({
       id: dockId,
