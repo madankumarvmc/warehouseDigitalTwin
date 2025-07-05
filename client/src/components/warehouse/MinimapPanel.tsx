@@ -81,7 +81,7 @@ export function MinimapPanel({ forklifts, activeHeatmap, sidebarCollapsed = fals
         {/* Collapsed state - floating toggle button */}
         <Button
           onClick={onToggle}
-          className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-l-lg shadow-lg z-30"
+          className="fixed right-2 top-32 bg-primary hover:bg-primary/90 text-primary-foreground p-2 rounded-l-lg shadow-lg z-40 border border-primary-foreground/20"
           title="Show Overview"
         >
           <ChevronLeft className="h-4 w-4" />
