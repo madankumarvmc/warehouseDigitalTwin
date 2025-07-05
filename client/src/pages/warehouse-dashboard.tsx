@@ -13,6 +13,11 @@ import { warehouseLayout } from '@/lib/warehouse/warehouseLayout';
 function WarehouseDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(true);
+  
+  // Debug: Track rightSidebarCollapsed state changes
+  useEffect(() => {
+    console.log('rightSidebarCollapsed state changed to:', rightSidebarCollapsed);
+  }, [rightSidebarCollapsed]);
   const [searchHighlight, setSearchHighlight] = useState<string[]>([]);
   const [currentZoom, setCurrentZoom] = useState(100);
   const [currentPosition, setCurrentPosition] = useState({ x: 0, y: 0 });
@@ -260,7 +265,9 @@ function WarehouseDashboard() {
             isCollapsed={true}
             onToggle={() => {
               console.log('Toggle called, current state:', rightSidebarCollapsed);
-              setRightSidebarCollapsed(!rightSidebarCollapsed);
+              const newState = !rightSidebarCollapsed;
+              console.log('Setting new state to:', newState);
+              setRightSidebarCollapsed(newState);
             }}
           />
         )}
