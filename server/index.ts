@@ -56,9 +56,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Export for Vercel
-  if (process.env.NODE_ENV === "production") {
-    module.exports = app;
+  // For Vercel serverless
+  if (process.env.VERCEL) {
+    return app;
   } else {
     // ALWAYS serve the app on port 5000
     // this serves both the API and the client.
@@ -69,3 +69,58 @@ app.use((req, res, next) => {
     });
   }
 })();
+
+// Export for Vercel
+export default async function handler(req: any, res: any) {
+  const server = await (async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: false }));
+
+    // Simple routes
+    app.get("/api/health", (_req, res) => {
+      res.json({ status: "ok", timestamp: new Date().toISOString() });
+    });
+
+    app.get("/api/warehouse/layout", (_req, res) => {
+      res.json({
+        aisles: ["A1", "A2", "A3", "A4"],
+        binsPerAisle: 60,
+        levels: 3,
+        depth: 2,
+        cellWidth: 40,
+        cellHeight: 30,
+        aisleWidth: 120
+      });
+    });
+
+    // Serve simple HTML for all other routes
+    app.get("*", (_req, res) => {
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Warehouse Digital Twin</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body>
+          <div id="root">
+            <h1>Warehouse Digital Twin</h1>
+            <p>Application is running ✅</p>
+            <p>API endpoints:</p>
+            <ul>
+              <li><a href="/api/health">/api/health</a></li>
+              <li><a href="/api/warehouse/layout">/api/warehouse/layout</a></li>
+            </ul>
+          </div>
+        </body>
+        </html>
+      `);
+    });
+
+    return app;
+  })();
+
+  return server(req, res);
+}
