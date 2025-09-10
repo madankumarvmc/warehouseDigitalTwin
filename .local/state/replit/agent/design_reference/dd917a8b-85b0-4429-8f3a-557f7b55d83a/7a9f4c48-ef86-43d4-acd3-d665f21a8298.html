@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Visibility Demo MVP - Operational & Inventory Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'surface': '#121212',
+                        'surface-variant': '#1E1E1E',
+                        'surface-elevated': '#2D2D2D',
+                        'primary': '#1976D2',
+                        'primary-variant': '#1565C0',
+                        'secondary': '#03DAC6',
+                        'error': '#CF6679',
+                        'warning': '#FF9800',
+                        'success': '#4CAF50',
+                        'on-surface': '#E1E1E1',
+                        'on-surface-variant': '#B3B3B3',
+                    },
+                    fontFamily: {
+                        'roboto': ['Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        .canvas-container {
+            background: radial-gradient(circle at 30% 30%, #1E1E1E 0%, #121212 100%);
+        }
+        
+        .heatmap-volume {
+            background: linear-gradient(45deg, #1976D2, #F44336);
+        }
+        
+        .heatmap-frequency {
+            background: linear-gradient(45deg, #1B5E20, #4CAF50);
+        }
+        
+        .heatmap-occupancy {
+            background: linear-gradient(45deg, #FF6F00, #FFC107);
+        }
+        
+        .heatmap-misplacement {
+            background: linear-gradient(45deg, #D32F2F, #FF5722);
+        }
+        
+        .heatmap-expiry {
+            background: linear-gradient(45deg, #FF8F00, #FFC107);
+        }
+        
+        .heatmap-exceptions {
+            background: linear-gradient(45deg, #6A1B9A, #9C27B0);
+        }
+        
+        .sidebar-collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-expanded {
+            transform: translateX(0);
+        }
+        
+        .minimap-viewport {
+            border: 2px solid #1976D2;
+            background: rgba(25, 118, 210, 0.2);
+        }
+        
+        .forklift-icon {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .trail-path {
+            stroke-dasharray: 4 4;
+            animation: dashMove 2s linear infinite;
+        }
+        
+        @keyframes dashMove {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: 8; }
+        }
+
+        .grid-cell {
+            stroke: #333;
+            stroke-width: 0.5;
+            opacity: 0.8;
+        }
+
+        .rack-structure {
+            fill: #2D2D2D;
+            stroke: #555;
+            stroke-width: 1;
+        }
+
+        .aisle-path {
+            fill: #1A1A1A;
+            stroke: #333;
+            stroke-width: 0.5;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-roboto overflow-hidden">
+    <!-- Main Container -->
+    <div class="flex h-screen">
+        <!-- Collapsible Sidebar -->
+        <div id="sidebar" class="sidebar-expanded transition-transform duration-300 ease-in-out w-80 bg-surface-variant border-r border-gray-700 flex flex-col">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-gray-700">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-primary">Warehouse Controls</h2>
+                    <button id="sidebarToggle" class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-elevated rounded-full transition-colors">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                </div>
+                <p class="text-sm text-on-surface-variant mt-1">Operational & Inventory Visibility</p>
+            </div>
+
+            <!-- Layer Controls -->
+            <div class="p-4 border-b border-gray-700">
+                <h3 class="text-sm font-medium mb-3 text-on-surface">Heatmap Layers</h3>
+                <div class="space-y-2">
+                    <!-- Volume Layer -->
+                    <div class="flex items-center justify-between p-2 bg-surface-elevated rounded">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 heatmap-volume rounded"></div>
+                            <span class="text-sm">Volume</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" min="0" max="100" value="80" class="w-12 h-1 bg-gray-600 rounded-lg appearance-none">
+                            <button class="layer-toggle text-primary" data-layer="volume">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Frequency Layer -->
+                    <div class="flex items-center justify-between p-2 bg-surface-elevated rounded">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 heatmap-frequency rounded"></div>
+                            <span class="text-sm">Frequency</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" min="0" max="100" value="65" class="w-12 h-1 bg-gray-600 rounded-lg appearance-none">
+                            <button class="layer-toggle text-on-surface-variant" data-layer="frequency">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Occupancy Layer -->
+                    <div class="flex items-center justify-between p-2 bg-surface-elevated rounded">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 heatmap-occupancy rounded"></div>
+                            <span class="text-sm">Occupancy</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" min="0" max="100" value="90" class="w-12 h-1 bg-gray-600 rounded-lg appearance-none">
+                            <button class="layer-toggle text-on-surface-variant" data-layer="occupancy">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Misplacement Layer -->
+                    <div class="flex items-center justify-between p-2 bg-surface-elevated rounded">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 heatmap-misplacement rounded"></div>
+                            <span class="text-sm">Misplacement</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" min="0" max="100" value="40" class="w-12 h-1 bg-gray-600 rounded-lg appearance-none">
+                            <button class="layer-toggle text-on-surface-variant" data-layer="misplacement">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Expiry Layer -->
+                    <div class="flex items-center justify-between p-2 bg-surface-elevated rounded">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 heatmap-expiry rounded"></div>
+                            <span class="text-sm">Expiry</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" min="0" max="100" value="25" class="w-12 h-1 bg-gray-600 rounded-lg appearance-none">
+                            <button class="layer-toggle text-on-surface-variant" data-layer="expiry">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Exceptions Layer -->
+                    <div class="flex items-center justify-between p-2 bg-surface-elevated rounded">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 heatmap-exceptions rounded"></div>
+                            <span class="text-sm">Exceptions</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" min="0" max="100" value="15" class="w-12 h-1 bg-gray-600 rounded-lg appearance-none">
+                            <button class="layer-toggle text-on-surface-variant" data-layer="exceptions">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Range Controls -->
+            <div class="p-4 border-b border-gray-700">
+                <h3 class="text-sm font-medium mb-3 text-on-surface">Time Range</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-xs text-on-surface-variant">
+                        <span>15 min</span>
+                        <span>24 hours</span>
+                    </div>
+                    <input type="range" min="15" max="1440" value="120" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                    <div class="text-center">
+                        <span class="text-sm text-primary font-medium">Last 2 hours</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Tracking -->
+            <div class="p-4 border-b border-gray-700">
+                <h3 class="text-sm font-medium mb-3 text-on-surface">Live Resources</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between p-2 bg-surface-elevated rounded">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-truck text-warning"></i>
+                            <span class="text-sm">Forklifts</span>
+                            <span class="text-xs bg-primary px-2 py-1 rounded-full">3 Active</span>
+                        </div>
+                        <button class="layer-toggle text-primary" data-layer="resources">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SKU Search -->
+            <div class="p-4 border-b border-gray-700">
+                <h3 class="text-sm font-medium mb-3 text-on-surface">SKU Search</h3>
+                <div class="relative">
+                    <input type="text" placeholder="Enter SKU (e.g. ABC123)" class="w-full bg-surface-elevated border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-primary">
+                    <button class="absolute right-2 top-2 text-on-surface-variant hover:text-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="mt-2 text-xs text-on-surface-variant">
+                    Press Enter to search, ESC to clear
+                </div>
+            </div>
+
+            <!-- Export Controls -->
+            <div class="p-4 mt-auto">
+                <h3 class="text-sm font-medium mb-3 text-on-surface">Export</h3>
+                <div class="space-y-2">
+                    <button class="w-full bg-primary hover:bg-primary-variant text-white px-4 py-2 rounded transition-colors flex items-center justify-center space-x-2">
+                        <i class="fas fa-camera"></i>
+                        <span>Export PNG</span>
+                    </button>
+                    <button class="w-full bg-surface-elevated hover:bg-gray-600 text-on-surface px-4 py-2 rounded transition-colors flex items-center justify-center space-x-2">
+                        <i class="fas fa-vector-square"></i>
+                        <span>Export SVG</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Toggle Button (when collapsed) -->
+        <button id="sidebarToggleCollapsed" class="hidden fixed left-4 top-4 z-50 bg-primary hover:bg-primary-variant text-white p-3 rounded-full shadow-lg transition-colors">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Top Navigation Bar -->
+            <div class="bg-surface-variant border-b border-gray-700 p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-xl font-medium text-primary">Warehouse Floor A - Section 1</h1>
+                        <div class="flex items-center space-x-2 text-sm text-on-surface-variant">
+                            <div class="w-2 h-2 bg-success rounded-full pulse-animation"></div>
+                            <span>Live Data</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- Performance Metrics -->
+                        <div class="text-xs text-on-surface-variant">
+                            <span>FPS: <span class="text-success">60</span></span>
+                            <span class="ml-4">Objects: <span class="text-primary">1,440</span></span>
+                        </div>
+                        <!-- Zoom Controls -->
+                        <div class="flex items-center space-x-2 bg-surface-elevated rounded px-3 py-1">
+                            <button class="zoom-btn text-on-surface-variant hover:text-primary" data-zoom="25">25%</button>
+                            <button class="zoom-btn text-on-surface-variant hover:text-primary" data-zoom="50">50%</button>
+                            <button class="zoom-btn text-primary font-medium" data-zoom="100">100%</button>
+                            <button class="zoom-btn text-on-surface-variant hover:text-primary" data-zoom="200">200%</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas and Minimap Container -->
+            <div class="flex-1 flex">
+                <!-- Main Canvas Area -->
+                <div class="flex-1 canvas-container relative overflow-hidden">
+                    <!-- Canvas Element -->
+                    <canvas id="warehouseCanvas" class="absolute inset-0 cursor-move"></canvas>
+                    
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" class="absolute inset-0 bg-surface bg-opacity-75 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                            <p class="mt-4 text-on-surface-variant">Loading warehouse data...</p>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Controls Overlay -->
+                    <div class="absolute bottom-4 right-4 flex flex-col space-y-2">
+                        <button class="bg-surface-elevated hover:bg-gray-600 text-on-surface p-3 rounded-full shadow-lg transition-colors" title="Zoom In">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="bg-surface-elevated hover:bg-gray-600 text-on-surface p-3 rounded-full shadow-lg transition-colors" title="Zoom Out">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button class="bg-surface-elevated hover:bg-gray-600 text-on-surface p-3 rounded-full shadow-lg transition-colors" title="Reset View">
+                            <i class="fas fa-home"></i>
+                        </button>
+                        <button class="bg-surface-elevated hover:bg-gray-600 text-on-surface p-3 rounded-full shadow-lg transition-colors" title="Fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+
+                    <!-- Status Indicators -->
+                    <div class="absolute top-4 left-4 space-y-2">
+                        <div class="bg-surface-elevated bg-opacity-90 rounded px-3 py-2 text-sm">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                <span>X: <span class="text-success">0</span>, Y: <span class="text-success">0</span></span>
+                            </div>
+                        </div>
+                        <div class="bg-surface-elevated bg-opacity-90 rounded px-3 py-2 text-sm">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-search-plus text-primary"></i>
+                                <span>Zoom: <span class="text-success">100%</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mini-map Panel -->
+                <div class="w-80 bg-surface-variant border-l border-gray-700 p-4">
+                    <h3 class="text-sm font-medium mb-3 text-on-surface">Overview</h3>
+                    <div class="relative bg-surface rounded border border-gray-600 aspect-square">
+                        <!-- Mini-map Canvas -->
+                        <canvas id="minimapCanvas" class="w-full h-full rounded"></canvas>
+                        <!-- Viewport Indicator -->
+                        <div class="minimap-viewport absolute rounded" style="top: 20%; left: 15%; width: 30%; height: 25%;"></div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="mt-4">
+                        <h4 class="text-xs font-medium mb-2 text-on-surface-variant">Legend</h4>
+                        <div class="space-y-1 text-xs">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-gray-500 rounded"></div>
+                                <span>Storage Racks</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-gray-700 rounded"></div>
+                                <span>Aisles</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-warning rounded-full"></div>
+                                <span>Forklifts</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 heatmap-volume rounded"></div>
+                                <span>Active Heatmap</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Statistics -->
+                    <div class="mt-6">
+                        <h4 class="text-xs font-medium mb-2 text-on-surface-variant">Live Statistics</h4>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between">
+                                <span>Total Positions:</span>
+                                <span class="text-primary font-medium">1,440</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Occupied:</span>
+                                <span class="text-success font-medium">1,286 (89%)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Active Resources:</span>
+                                <span class="text-warning font-medium">3</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Alerts:</span>
+                                <span class="text-error font-medium">7</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Info Modal -->
+    <div id="resourceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-surface-variant rounded-lg p-6 max-w-md w-full mx-4 border border-gray-600">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-primary">Forklift FL-003</h3>
+                <button id="closeResourceModal" class="text-on-surface-variant hover:text-primary">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <span>Status:</span>
+                    <span class="text-success">Active</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Load Status:</span>
+                    <span class="text-warning">Loaded</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Current Position:</span>
+                    <span class="text-primary">A2-B23-L1</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Speed:</span>
+                    <span>2.3 m/s</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Distance Traveled:</span>
+                    <span>847 m</span>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-600">
+                <h4 class="text-sm font-medium mb-2">Recent Activity Trail</h4>
+                <div class="text-xs text-on-surface-variant">
+                    Last 5 minutes of movement history shown on map
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Initialize Canvas
+            const canvas = document.getElementById('warehouseCanvas');
+            const ctx = canvas.getContext('2d');
+            const minimapCanvas = document.getElementById('minimapCanvas');
+            const minimapCtx = minimapCanvas.getContext('2d');
+            
+            let currentZoom = 1;
+            let panX = 0;
+            let panY = 0;
+            let isDragging = false;
+            let dragStart = { x: 0, y: 0 };
+            
+            // Warehouse layout data (simulated)
+            const warehouseLayout = {
+                aisles: ['A1', 'A2', 'A3', 'A4'],
+                binsPerAisle: 60,
+                levels: 3,
+                depth: 2,
+                cellWidth: 40,
+                cellHeight: 30,
+                aisleWidth: 120
+            };
+            
+            // Generate synthetic heatmap data
+            function generateHeatmapData(type) {
+                const data = [];
+                for (let aisle = 1; aisle <= 4; aisle++) {
+                    for (let bin = 1; bin <= 60; bin++) {
+                        for (let level = 1; level <= 3; level++) {
+                            for (let depth = 1; depth <= 2; depth++) {
+                                const cellId = `A${aisle}-B${bin.toString().padStart(2, '0')}-L${level}-D${depth}`;
+                                let value = 0;
+                                
+                                // Generate realistic patterns for each heatmap type
+                                switch(type) {
+                                    case 'volume':
+                                        // Higher volume near entrance (A1) and receiving areas
+                                        value = Math.max(0, 1 - (aisle - 1) * 0.3 - Math.abs(bin - 30) * 0.01 + Math.random() * 0.3);
+                                        break;
+                                    case 'frequency':
+                                        // Similar to volume but with more variance
+                                        value = Math.max(0, 0.8 - (aisle - 1) * 0.2 + Math.random() * 0.4);
+                                        break;
+                                    case 'occupancy':
+                                        // Most areas highly occupied
+                                        value = 0.6 + Math.random() * 0.35;
+                                        break;
+                                    case 'misplacement':
+                                        // Random sparse errors
+                                        value = Math.random() < 0.05 ? Math.random() : 0;
+                                        break;
+                                    case 'expiry':
+                                        // Random sparse warnings
+                                        value = Math.random() < 0.03 ? Math.random() : 0;
+                                        break;
+                                    case 'exceptions':
+                                        // Very rare critical issues
+                                        value = Math.random() < 0.02 ? Math.random() : 0;
+                                        break;
+                                }
+                                
+                                data.push({ cellId, value });
+                            }
+                        }
+                    }
+                }
+                return data;
+            }
+            
+            // Current active layers
+            let activeLayers = { volume: true, resources: true };
+            let currentHeatmapData = generateHeatmapData('volume');
+            
+            // Forklift simulation data
+            let forklifts = [
+                { id: 'FL-001', x: 100, y: 150, loaded: true, trail: [] },
+                { id: 'FL-002', x: 300, y: 250, loaded: false, trail: [] },
+                { id: 'FL-003', x: 500, y: 180, loaded: true, trail: [] }
+            ];
+            
+            // Resize canvas to fill container
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                minimapCanvas.width = minimapCanvas.offsetWidth;
+                minimapCanvas.height = minimapCanvas.offsetHeight;
+                render();
+            }
+            
+            // Draw warehouse grid
+            function drawWarehouseGrid() {
+                ctx.save();
+                ctx.translate(panX, panY);
+                ctx.scale(currentZoom, currentZoom);
+                
+                const { cellWidth, cellHeight, aisleWidth } = warehouseLayout;
+                
+                // Draw aisles
+                for (let aisle = 0; aisle < 4; aisle++) {
+                    const aisleX = aisle * (cellWidth * 2 + aisleWidth);
+                    
+                    // Draw aisle path
+                    ctx.fillStyle = '#1A1A1A';
+                    ctx.fillRect(aisleX + cellWidth * 2, 0, aisleWidth, 60 * cellHeight);
+                    
+                    // Draw racks on both sides
+                    for (let side = 0; side < 2; side++) {
+                        const rackX = aisleX + side * (cellWidth + aisleWidth);
+                        
+                        for (let bin = 0; bin < 60; bin++) {
+                            for (let level = 0; level < 3; level++) {
+                                const x = rackX;
+                                const y = bin * cellHeight + level * cellHeight * 60;
+                                
+                                // Draw rack structure
+                                ctx.fillStyle = '#2D2D2D';
+                                ctx.fillRect(x, y, cellWidth, cellHeight);
+                                ctx.strokeStyle = '#555';
+                                ctx.lineWidth = 1;
+                                ctx.strokeRect(x, y, cellWidth, cellHeight);
+                            }
+                        }
+                    }
+                }
+                
+                ctx.restore();
+            }
+            
+            // Draw heatmap overlay
+            function drawHeatmap() {
+                if (!activeLayers.volume) return;
+                
+                ctx.save();
+                ctx.translate(panX, panY);
+                ctx.scale(currentZoom, currentZoom);
+                
+                const { cellWidth, cellHeight, aisleWidth } = warehouseLayout;
+                
+                currentHeatmapData.forEach(({ cellId, value }) => {
+                    if (value === 0) return;
+                    
+                    // Parse cell ID to get position
+                    const [aisle, bin, level, depth] = cellId.split('-');
+                    const aisleNum = parseInt(aisle.slice(1)) - 1;
+                    const binNum = parseInt(bin.slice(1)) - 1;
+                    const levelNum = parseInt(level.slice(1)) - 1;
+                    const depthNum = parseInt(depth.slice(1)) - 1;
+                    
+                    const x = aisleNum * (cellWidth * 2 + aisleWidth) + depthNum * cellWidth;
+                    const y = binNum * cellHeight;
+                    
+                    // Color based on heatmap type and value
+                    const alpha = value * 0.7;
+                    ctx.fillStyle = `rgba(25, 118, 210, ${alpha})`; // Blue for volume
+                    ctx.fillRect(x, y, cellWidth, cellHeight);
+                });
+                
+                ctx.restore();
+            }
+            
+            // Draw forklift resources
+            function drawResources() {
+                if (!activeLayers.resources) return;
+                
+                ctx.save();
+                ctx.translate(panX, panY);
+                ctx.scale(currentZoom, currentZoom);
+                
+                forklifts.forEach(forklift => {
+                    // Draw forklift icon
+                    ctx.fillStyle = forklift.loaded ? '#FF9800' : '#4CAF50';
+                    ctx.beginPath();
+                    ctx.arc(forklift.x, forklift.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw load indicator
+                    if (forklift.loaded) {
+                        ctx.fillStyle = '#F44336';
+                        ctx.fillRect(forklift.x - 4, forklift.y - 12, 8, 4);
+                    }
+                    
+                    // Draw ID
+                    ctx.fillStyle = '#E1E1E1';
+                    ctx.font = '10px Roboto';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(forklift.id, forklift.x, forklift.y + 20);
+                });
+                
+                ctx.restore();
+            }
+            
+            // Main render function
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                drawWarehouseGrid();
+                drawHeatmap();
+                drawResources();
+                
+                renderMinimap();
+            }
+            
+            // Render minimap
+            function renderMinimap() {
+                minimapCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+                
+                const scale = Math.min(minimapCanvas.width / 1000, minimapCanvas.height / 800);
+                minimapCtx.save();
+                minimapCtx.scale(scale, scale);
+                
+                // Draw simplified warehouse
+                minimapCtx.fillStyle = '#2D2D2D';
+                minimapCtx.fillRect(0, 0, 1000, 800);
+                
+                // Draw aisles
+                minimapCtx.fillStyle = '#1A1A1A';
+                for (let i = 0; i < 4; i++) {
+                    minimapCtx.fillRect(i * 200 + 80, 0, 40, 800);
+                }
+                
+                // Draw forklifts
+                forklifts.forEach(forklift => {
+                    minimapCtx.fillStyle = '#FF9800';
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(forklift.x * 2, forklift.y * 2, 4, 0, Math.PI * 2);
+                    minimapCtx.fill();
+                });
+                
+                minimapCtx.restore();
+            }
+            
+            // Event handlers
+            canvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                dragStart = { x: e.clientX - panX, y: e.clientY - panY };
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    panX = e.clientX - dragStart.x;
+                    panY = e.clientY - dragStart.y;
+                    render();
+                }
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+                currentZoom = Math.max(0.1, Math.min(3, currentZoom * zoomFactor));
+                render();
+            });
+            
+            // Sidebar toggle
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarToggleCollapsed = document.getElementById('sidebarToggleCollapsed');
+            
+            function toggleSidebar() {
+                sidebar.classList.toggle('sidebar-collapsed');
+                sidebar.classList.toggle('sidebar-expanded');
+                
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    sidebarToggleCollapsed.classList.remove('hidden');
+                } else {
+                    sidebarToggleCollapsed.classList.add('hidden');
+                }
+                
+                setTimeout(resizeCanvas, 300);
+            }
+            
+            sidebarToggle.addEventListener('click', toggleSidebar);
+            sidebarToggleCollapsed.addEventListener('click', toggleSidebar);
+            
+            // Layer toggles
+            document.querySelectorAll('.layer-toggle').forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const layer = toggle.dataset.layer;
+                    activeLayers[layer] = !activeLayers[layer];
+                    
+                    const icon = toggle.querySelector('i');
+                    if (activeLayers[layer]) {
+                        icon.className = 'fas fa-eye';
+                        toggle.classList.remove('text-on-surface-variant');
+                        toggle.classList.add('text-primary');
+                        
+                        if (layer !== 'resources') {
+                            currentHeatmapData = generateHeatmapData(layer);
+                        }
+                    } else {
+                        icon.className = 'fas fa-eye-slash';
+                        toggle.classList.remove('text-primary');
+                        toggle.classList.add('text-on-surface-variant');
+                    }
+                    
+                    render();
+                });
+            });
+            
+            // Simulate forklift movement
+            function animateForklifts() {
+                forklifts.forEach(forklift => {
+                    // Random movement
+                    forklift.x += (Math.random() - 0.5) * 20;
+                    forklift.y += (Math.random() - 0.5) * 20;
+                    
+                    // Keep within bounds
+                    forklift.x = Math.max(50, Math.min(750, forklift.x));
+                    forklift.y = Math.max(50, Math.min(500, forklift.y));
+                    
+                    // Randomly change load status
+                    if (Math.random() < 0.1) {
+                        forklift.loaded = !forklift.loaded;
+                    }
+                });
+                
+                render();
+            }
+            
+            // Hide loading overlay and start simulation
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                setInterval(animateForklifts, 1000);
+            }, 2000);
+            
+            // Initialize
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+        })();
+    </script>
+</body>
+</html>

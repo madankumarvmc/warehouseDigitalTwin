@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Visibility Demo MVP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1565C0',
+                        secondary: '#37474F',
+                        accent: '#FF6F00',
+                        success: '#2E7D32',
+                        warning: '#F57C00',
+                        error: '#C62828'
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/konva@9.2.0/konva.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-inter overflow-hidden">
+    <!-- @COMPONENT: AppHeader -->
+    <header class="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-warehouse text-primary text-2xl"></i>
+                    <h1 class="text-2xl font-semibold text-gray-900">Warehouse Visibility</h1>
+                </div>
+                <div class="bg-gray-100 px-3 py-1 rounded-full">
+                    <span class="text-sm font-medium text-gray-600">Demo MVP</span>
+                </div>
+            </div>
+            
+            <!-- @COMPONENT: HeaderControls -->
+            <div class="flex items-center space-x-4">
+                <!-- SKU Search -->
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        placeholder="Search SKU..." 
+                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent w-64"
+                        id="skuSearch"
+                        data-implementation="Search functionality with auto-complete"
+                    >
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                
+                <!-- Export Button -->
+                <button 
+                    class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                    id="exportBtn"
+                    data-event="click:exportCurrentView"
+                >
+                    <i class="fas fa-download"></i>
+                    <span>Export</span>
+                </button>
+                
+                <!-- Live Status Indicator -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600">Live</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: AppHeader -->
+
+    <div class="flex h-screen pt-20">
+        <!-- @COMPONENT: Sidebar -->
+        <aside class="w-80 bg-white border-r border-gray-200 overflow-y-auto">
+            <div class="p-6 space-y-6">
+                
+                <!-- Time Range Controls -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-semibold text-gray-900">Time Range</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>15 min</span>
+                            <span data-bind="selectedTimeRange">2 hours</span>
+                            <span>24 hours</span>
+                        </div>
+                        <input 
+                            type="range" 
+                            min="15" 
+                            max="1440" 
+                            value="120" 
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                            id="timeRangeSlider"
+                            data-implementation="Debounced slider with 300ms delay"
+                        >
+                    </div>
+                </div>
+
+                <!-- Heatmap Layers -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-semibold text-gray-900">Heatmap Layers</h3>
+                    <div class="space-y-2">
+                        <!-- Volume -->
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 bg-gradient-to-r from-blue-300 to-red-500 rounded"></div>
+                                <span class="font-medium text-gray-900">Volume</span>
+                            </div>
+                            <button class="text-primary hover:text-blue-700" data-layer="volume" data-active="true">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+
+                        <!-- Frequency -->
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 bg-gradient-to-r from-green-300 to-yellow-500 rounded"></div>
+                                <span class="font-medium text-gray-700">Frequency</span>
+                            </div>
+                            <button class="text-gray-400 hover:text-primary" data-layer="frequency" data-active="false">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+
+                        <!-- Occupancy -->
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 bg-gradient-to-r from-purple-300 to-pink-500 rounded"></div>
+                                <span class="font-medium text-gray-700">Occupancy</span>
+                            </div>
+                            <button class="text-gray-400 hover:text-primary" data-layer="occupancy" data-active="false">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+
+                        <!-- Misplacement -->
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 bg-gradient-to-r from-orange-300 to-red-600 rounded"></div>
+                                <span class="font-medium text-gray-700">Misplacement</span>
+                            </div>
+                            <button class="text-gray-400 hover:text-primary" data-layer="misplacement" data-active="false">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+
+                        <!-- Expiry -->
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 bg-gradient-to-r from-yellow-300 to-red-500 rounded"></div>
+                                <span class="font-medium text-gray-700">Expiry</span>
+                            </div>
+                            <button class="text-gray-400 hover:text-primary" data-layer="expiry" data-active="false">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+
+                        <!-- Exceptions -->
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 bg-gradient-to-r from-red-400 to-red-700 rounded"></div>
+                                <span class="font-medium text-gray-700">Exceptions</span>
+                            </div>
+                            <button class="text-gray-400 hover:text-primary" data-layer="exceptions" data-active="false">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resource Tracking -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-semibold text-gray-900">Resource Tracking</h3>
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-truck text-accent"></i>
+                            <span class="font-medium text-gray-900">Live Resources</span>
+                        </div>
+                        <button class="text-primary hover:text-blue-700" data-layer="resources" data-active="true">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Resources -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-semibold text-gray-900">Active Resources</h3>
+                    <div class="space-y-2">
+                        <!-- @MAP: resources.map(resource => ( -->
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg" data-resource-id="FL001">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-3 h-3 bg-success rounded-full"></div>
+                                <div>
+                                    <span class="font-medium text-gray-900" data-bind="resource.id">FL001</span>
+                                    <p class="text-sm text-gray-600" data-bind="resource.status">Loaded - A2-B15</p>
+                                </div>
+                            </div>
+                            <button class="text-sm text-primary hover:text-blue-700" data-event="click:showResourceTrace">
+                                Trace
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg" data-resource-id="FL002">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-3 h-3 bg-warning rounded-full"></div>
+                                <div>
+                                    <span class="font-medium text-gray-900" data-bind="resource.id">FL002</span>
+                                    <p class="text-sm text-gray-600" data-bind="resource.status">Empty - A1-B42</p>
+                                </div>
+                            </div>
+                            <button class="text-sm text-primary hover:text-blue-700" data-event="click:showResourceTrace">
+                                Trace
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg" data-resource-id="FL003">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-3 h-3 bg-success rounded-full"></div>
+                                <div>
+                                    <span class="font-medium text-gray-900" data-bind="resource.id">FL003</span>
+                                    <p class="text-sm text-gray-600" data-bind="resource.status">Loaded - A4-B08</p>
+                                </div>
+                            </div>
+                            <button class="text-sm text-primary hover:text-blue-700" data-event="click:showResourceTrace">
+                                Trace
+                            </button>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+
+                <!-- Metrics Summary -->
+                <div class="space-y-3">
+                    <h3 class="text-lg font-semibold text-gray-900">Current Metrics</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-gray-600">Active Resources</p>
+                            <p class="text-xl font-bold text-primary" data-bind="metrics.activeResources">3</p>
+                        </div>
+                        <div class="p-3 bg-green-50 rounded-lg">
+                            <p class="text-sm text-gray-600">Avg Occupancy</p>
+                            <p class="text-xl font-bold text-success" data-bind="metrics.avgOccupancy">78%</p>
+                        </div>
+                        <div class="p-3 bg-orange-50 rounded-lg">
+                            <p class="text-sm text-gray-600">Exceptions</p>
+                            <p class="text-xl font-bold text-warning" data-bind="metrics.exceptions">12</p>
+                        </div>
+                        <div class="p-3 bg-red-50 rounded-lg">
+                            <p class="text-sm text-gray-600">Misplacements</p>
+                            <p class="text-xl font-bold text-error" data-bind="metrics.misplacements">5</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainCanvas -->
+        <main class="flex-1 relative bg-gray-100">
+            <!-- Canvas Container -->
+            <div id="canvasContainer" class="w-full h-full">
+                <!-- @FUNCTIONALITY: This canvas should implement the warehouse map using Konva.js with pan/zoom functionality -->
+                <div id="warehouseCanvas" class="w-full h-full cursor-grab active:cursor-grabbing">
+                    <!-- Canvas will be rendered here by Konva.js -->
+                </div>
+            </div>
+
+            <!-- Canvas Controls Overlay -->
+            <div class="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 space-y-3">
+                <div class="flex items-center space-x-2">
+                    <button class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" id="zoomIn">
+                        <i class="fas fa-plus text-gray-600"></i>
+                    </button>
+                    <button class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" id="zoomOut">
+                        <i class="fas fa-minus text-gray-600"></i>
+                    </button>
+                    <button class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" id="resetView">
+                        <i class="fas fa-expand text-gray-600"></i>
+                    </button>
+                </div>
+                <div class="text-sm text-gray-600">
+                    <span>Zoom: </span><span id="zoomLevel" data-bind="canvas.zoom">100%</span>
+                </div>
+            </div>
+
+            <!-- Legend Overlay -->
+            <div class="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4" id="legendPanel" style="display: none;">
+                <h4 class="font-semibold text-gray-900 mb-3">Volume Heatmap</h4>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-600">Low</span>
+                    <div class="w-20 h-4 bg-gradient-to-r from-blue-300 to-red-500 rounded"></div>
+                    <span class="text-sm text-gray-600">High</span>
+                </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    Values represent movement volume over selected time range
+                </div>
+            </div>
+        </main>
+        <!-- @END_COMPONENT: MainCanvas -->
+    </div>
+
+    <!-- @STATE: Various state requirements for the application -->
+    <!-- @STATE: selectedTimeRange:number = 120 (minutes) -->
+    <!-- @STATE: activeLayers:object = {volume: true, frequency: false, ...} -->
+    <!-- @STATE: canvasZoom:number = 1.0 -->
+    <!-- @STATE: resources:array = [{id, x, y, loaded, path}] -->
+
+    <script>
+        (function() {
+            // Mock warehouse layout data
+            const warehouseLayout = {
+                aisles: ['A1', 'A2', 'A3', 'A4'],
+                binsPerAisle: 60,
+                levels: ['L1', 'L2', 'L3'],
+                depths: ['D1', 'D2']
+            };
+
+            // Generate mock bin layout
+            function generateBinLayout() {
+                const bins = [];
+                const aisleWidth = 200;
+                const binWidth = 20;
+                const binHeight = 15;
+                const aisleSpacing = 100;
+
+                warehouseLayout.aisles.forEach((aisle, aisleIndex) => {
+                    for (let bin = 1; bin <= warehouseLayout.binsPerAisle; bin++) {
+                        warehouseLayout.levels.forEach((level, levelIndex) => {
+                            warehouseLayout.depths.forEach((depth, depthIndex) => {
+                                const cellId = `${aisle}-B${bin.toString().padStart(2, '0')}-${level}-${depth}`;
+                                const x = aisleIndex * (aisleWidth + aisleSpacing) + 50;
+                                const y = (bin - 1) * (binHeight + 2) + levelIndex * 200 + depthIndex * binHeight + 50;
+                                
+                                bins.push({
+                                    cellId,
+                                    x,
+                                    y,
+                                    width: binWidth,
+                                    height: binHeight,
+                                    aisle,
+                                    bin: `B${bin.toString().padStart(2, '0')}`,
+                                    level,
+                                    depth
+                                });
+                            });
+                        });
+                    }
+                });
+                return bins;
+            }
+
+            // Initialize Konva stage
+            let stage, layer, heatmapLayer, resourceLayer;
+            const bins = generateBinLayout();
+
+            function initializeCanvas() {
+                const container = document.getElementById('warehouseCanvas');
+                
+                stage = new Konva.Stage({
+                    container: 'warehouseCanvas',
+                    width: container.offsetWidth,
+                    height: container.offsetHeight,
+                    draggable: true
+                });
+
+                layer = new Konva.Layer();
+                heatmapLayer = new Konva.Layer();
+                resourceLayer = new Konva.Layer();
+
+                // Draw warehouse grid
+                drawWarehouseGrid();
+                
+                stage.add(layer);
+                stage.add(heatmapLayer);
+                stage.add(resourceLayer);
+
+                // Enable zoom functionality
+                stage.on('wheel', (e) => {
+                    e.evt.preventDefault();
+                    const oldScale = stage.scaleX();
+                    const pointer = stage.getPointerPosition();
+                    const mousePointTo = {
+                        x: (pointer.x - stage.x()) / oldScale,
+                        y: (pointer.y - stage.y()) / oldScale,
+                    };
+
+                    let direction = e.evt.deltaY > 0 ? -1 : 1;
+                    const scaleBy = 1.1;
+                    const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+                    if (newScale >= 0.5 && newScale <= 3) {
+                        stage.scale({ x: newScale, y: newScale });
+                        
+                        const newPos = {
+                            x: pointer.x - mousePointTo.x * newScale,
+                            y: pointer.y - mousePointTo.y * newScale,
+                        };
+                        stage.position(newPos);
+                        
+                        document.getElementById('zoomLevel').textContent = Math.round(newScale * 100) + '%';
+                        stage.batchDraw();
+                    }
+                });
+            }
+
+            function drawWarehouseGrid() {
+                // Draw aisle labels and bins
+                bins.forEach(bin => {
+                    const rect = new Konva.Rect({
+                        x: bin.x,
+                        y: bin.y,
+                        width: bin.width,
+                        height: bin.height,
+                        fill: '#f8f9fa',
+                        stroke: '#dee2e6',
+                        strokeWidth: 0.5
+                    });
+
+                    rect.on('click', function() {
+                        // TODO: Implement bin click functionality
+                        console.log('Clicked bin:', bin.cellId);
+                    });
+
+                    layer.add(rect);
+                });
+
+                // Draw aisle labels
+                warehouseLayout.aisles.forEach((aisle, index) => {
+                    const text = new Konva.Text({
+                        x: index * 300 + 50,
+                        y: 20,
+                        text: aisle,
+                        fontSize: 16,
+                        fontFamily: 'Inter',
+                        fill: '#374151',
+                        fontStyle: 'bold'
+                    });
+                    layer.add(text);
+                });
+            }
+
+            // Mock heatmap data generation
+            function generateHeatmapData(metric) {
+                return bins.map(bin => ({
+                    cellId: bin.cellId,
+                    value: Math.random(), // Seeded random in production
+                    x: bin.x,
+                    y: bin.y,
+                    width: bin.width,
+                    height: bin.height
+                }));
+            }
+
+            // Render heatmap overlay
+            function renderHeatmap(metric) {
+                heatmapLayer.destroyChildren();
+                
+                if (activeLayers[metric]) {
+                    const data = generateHeatmapData(metric);
+                    const colors = getHeatmapColors(metric);
+                    
+                    data.forEach(item => {
+                        const colorIndex = Math.floor(item.value * (colors.length - 1));
+                        const rect = new Konva.Rect({
+                            x: item.x,
+                            y: item.y,
+                            width: item.width,
+                            height: item.height,
+                            fill: colors[colorIndex],
+                            opacity: 0.7
+                        });
+                        heatmapLayer.add(rect);
+                    });
+                    
+                    // Show legend
+                    showLegend(metric, colors);
+                } else {
+                    hideLegend();
+                }
+                
+                heatmapLayer.batchDraw();
+            }
+
+            function getHeatmapColors(metric) {
+                const colorMaps = {
+                    volume: ['#DBEAFE', '#93C5FD', '#3B82F6', '#1E40AF', '#EF4444'],
+                    frequency: ['#D1FAE5', '#6EE7B7', '#10B981', '#059669', '#FBBF24'],
+                    occupancy: ['#E9D5FF', '#C084FC', '#9333EA', '#7C3AED', '#EC4899'],
+                    misplacement: ['#FED7AA', '#FB923C', '#EA580C', '#C2410C', '#DC2626'],
+                    expiry: ['#FEF3C7', '#FCD34D', '#F59E0B', '#D97706', '#EF4444'],
+                    exceptions: ['#FECACA', '#F87171', '#EF4444', '#DC2626', '#B91C1C']
+                };
+                return colorMaps[metric] || colorMaps.volume;
+            }
+
+            function showLegend(metric, colors) {
+                const legend = document.getElementById('legendPanel');
+                legend.style.display = 'block';
+                legend.querySelector('h4').textContent = `${metric.charAt(0).toUpperCase() + metric.slice(1)} Heatmap`;
+                legend.querySelector('.bg-gradient-to-r').style.background = 
+                    `linear-gradient(to right, ${colors[0]}, ${colors[colors.length - 1]})`;
+            }
+
+            function hideLegend() {
+                document.getElementById('legendPanel').style.display = 'none';
+            }
+
+            // Mock resource data and animation
+            const resources = [
+                { id: 'FL001', x: 100, y: 150, loaded: true, path: [] },
+                { id: 'FL002', x: 300, y: 250, loaded: false, path: [] },
+                { id: 'FL003', x: 500, y: 350, loaded: true, path: [] }
+            ];
+
+            function renderResources() {
+                resourceLayer.destroyChildren();
+                
+                if (activeLayers.resources) {
+                    resources.forEach(resource => {
+                        const forklift = new Konva.Circle({
+                            x: resource.x,
+                            y: resource.y,
+                            radius: 8,
+                            fill: resource.loaded ? '#059669' : '#F59E0B',
+                            stroke: '#FFFFFF',
+                            strokeWidth: 2
+                        });
+
+                        forklift.on('click', function() {
+                            showResourceTrace(resource.id);
+                        });
+
+                        resourceLayer.add(forklift);
+                    });
+                }
+                
+                resourceLayer.batchDraw();
+            }
+
+            function showResourceTrace(resourceId) {
+                // TODO: Implement resource path tracing
+                console.log('Showing trace for resource:', resourceId);
+            }
+
+            // State management
+            let activeLayers = {
+                volume: true,
+                frequency: false,
+                occupancy: false,
+                misplacement: false,
+                expiry: false,
+                exceptions: false,
+                resources: true
+            };
+
+            // Event handlers
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeCanvas();
+                renderHeatmap('volume');
+                renderResources();
+
+                // Layer toggle functionality
+                document.querySelectorAll('[data-layer]').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const layer = this.dataset.layer;
+                        const isActive = this.dataset.active === 'true';
+                        
+                        activeLayers[layer] = !isActive;
+                        this.dataset.active = !isActive;
+                        
+                        if (!isActive) {
+                            this.querySelector('i').className = 'fas fa-eye';
+                            this.classList.add('text-primary');
+                            this.classList.remove('text-gray-400');
+                            this.closest('.flex').querySelector('span').classList.remove('text-gray-700');
+                            this.closest('.flex').querySelector('span').classList.add('text-gray-900');
+                        } else {
+                            this.querySelector('i').className = 'fas fa-eye-slash';
+                            this.classList.remove('text-primary');
+                            this.classList.add('text-gray-400');
+                            this.closest('.flex').querySelector('span').classList.add('text-gray-700');
+                            this.closest('.flex').querySelector('span').classList.remove('text-gray-900');
+                        }
+                        
+                        if (layer === 'resources') {
+                            renderResources();
+                        } else {
+                            renderHeatmap(layer);
+                        }
+                        
+                        // TODO: Update URL hash with layer state
+                    });
+                });
+
+                // Canvas controls
+                document.getElementById('zoomIn').addEventListener('click', () => {
+                    const newScale = Math.min(stage.scaleX() * 1.2, 3);
+                    stage.scale({ x: newScale, y: newScale });
+                    document.getElementById('zoomLevel').textContent = Math.round(newScale * 100) + '%';
+                    stage.batchDraw();
+                });
+
+                document.getElementById('zoomOut').addEventListener('click', () => {
+                    const newScale = Math.max(stage.scaleX() / 1.2, 0.5);
+                    stage.scale({ x: newScale, y: newScale });
+                    document.getElementById('zoomLevel').textContent = Math.round(newScale * 100) + '%';
+                    stage.batchDraw();
+                });
+
+                document.getElementById('resetView').addEventListener('click', () => {
+                    stage.scale({ x: 1, y: 1 });
+                    stage.position({ x: 0, y: 0 });
+                    document.getElementById('zoomLevel').textContent = '100%';
+                    stage.batchDraw();
+                });
+
+                // Time range slider
+                document.getElementById('timeRangeSlider').addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    let displayValue;
+                    if (value < 60) {
+                        displayValue = `${value} min`;
+                    } else {
+                        displayValue = `${Math.round(value / 60)} hours`;
+                    }
+                    document.querySelector('[data-bind="selectedTimeRange"]').textContent = displayValue;
+                    
+                    // TODO: Debounce and regenerate heatmap data
+                });
+
+                // SKU Search
+                document.getElementById('skuSearch').addEventListener('keyup', function(e) {
+                    if (e.key === 'Escape') {
+                        this.value = '';
+                        // TODO: Clear highlights
+                    }
+                    // TODO: Implement SKU search and highlighting
+                });
+
+                // Export functionality
+                document.getElementById('exportBtn').addEventListener('click', function() {
+                    const dataURL = stage.toDataURL({ pixelRatio: 2 });
+                    const link = document.createElement('a');
+                    link.download = `warehouse-view-${new Date().toISOString().slice(0, 10)}.png`;
+                    link.href = dataURL;
+                    link.click();
+                });
+
+                // Mock WebSocket simulation for live updates
+                setInterval(() => {
+                    resources.forEach(resource => {
+                        // Simulate movement
+                        resource.x += (Math.random() - 0.5) * 10;
+                        resource.y += (Math.random() - 0.5) * 10;
+                        
+                        // Keep within bounds
+                        resource.x = Math.max(50, Math.min(800, resource.x));
+                        resource.y = Math.max(50, Math.min(600, resource.y));
+                        
+                        // Randomly change load status
+                        if (Math.random() < 0.1) {
+                            resource.loaded = !resource.loaded;
+                        }
+                    });
+                    
+                    renderResources();
+                    
+                    // Update resource status in sidebar
+                    resources.forEach(resource => {
+                        const element = document.querySelector(`[data-resource-id="${resource.id}"]`);
+                        if (element) {
+                            const status = element.querySelector('[data-bind="resource.status"]');
+                            const indicator = element.querySelector('.w-3.h-3');
+                            
+                            status.textContent = resource.loaded ? 
+                                `Loaded - A${Math.floor(Math.random() * 4) + 1}-B${Math.floor(Math.random() * 60) + 1}` :
+                                `Empty - A${Math.floor(Math.random() * 4) + 1}-B${Math.floor(Math.random() * 60) + 1}`;
+                            
+                            indicator.className = resource.loaded ? 
+                                'w-3 h-3 bg-success rounded-full' : 
+                                'w-3 h-3 bg-warning rounded-full';
+                        }
+                    });
+                }, 1000);
+
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    const container = document.getElementById('warehouseCanvas');
+                    stage.width(container.offsetWidth);
+                    stage.height(container.offsetHeight);
+                    stage.batchDraw();
+                });
+            });
+        })();
+    </script>
+
+    <style>
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #1565C0;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #1565C0;
+            cursor: pointer;
+            border: none;
+        }
+
+        .canvas-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (max-width: 1024px) {
+            aside {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            aside {
+                position: absolute;
+                left: -300px;
+                transition: left 0.3s ease;
+                z-index: 10;
+            }
+            
+            aside.open {
+                left: 0;
+            }
+        }
+    </style>
+</body>
+</html>
