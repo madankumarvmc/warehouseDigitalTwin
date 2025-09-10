@@ -1,3 +1,13 @@
 {
-  "buildCommand": "npm run build"
+  "functions": {
+    "server/index.ts": {
+      "runtime": "@vercel/node@3"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/server/index.ts"
+    }
+  ]
 }
