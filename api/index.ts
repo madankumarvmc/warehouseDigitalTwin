@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import fs from 'fs';
+import path from 'path';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   const { method, url } = req;
@@ -20,7 +22,40 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  // Serve HTML for all other routes
+  // Handle static assets
+  if (url?.startsWith('/assets/')) {
+    const assetPath = path.join(process.cwd(), 'dist/public', url);
+    try {
+      if (fs.existsSync(assetPath)) {
+        const content = fs.readFileSync(assetPath);
+        
+        // Set appropriate content type
+        if (url.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript');
+        } else if (url.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css');
+        }
+        
+        return res.send(content);
+      }
+    } catch (error) {
+      // Fall through to serve index.html
+    }
+  }
+
+  // Serve the React app's index.html for all other routes
+  try {
+    const indexPath = path.join(process.cwd(), 'dist/public/index.html');
+    if (fs.existsSync(indexPath)) {
+      const html = fs.readFileSync(indexPath, 'utf-8');
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(html);
+    }
+  } catch (error) {
+    // Fallback if built files don't exist
+  }
+
+  // Fallback HTML
   res.setHeader('Content-Type', 'text/html');
   return res.send(`
     <!DOCTYPE html>
@@ -29,22 +64,10 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
       <title>Warehouse Digital Twin</title>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        h1 { color: #333; }
-        .status { color: green; font-weight: bold; }
-        a { color: #0066cc; }
-      </style>
     </head>
     <body>
       <h1>🏭 Warehouse Digital Twin</h1>
-      <p class="status">✅ Application is running successfully!</p>
-      <h3>Available API Endpoints:</h3>
-      <ul>
-        <li><a href="/api/health" target="_blank">/api/health</a> - Health check</li>
-        <li><a href="/api/warehouse/layout" target="_blank">/api/warehouse/layout</a> - Warehouse layout data</li>
-      </ul>
-      <p><em>Deployed on Vercel</em></p>
+      <p>⚠️ React app build not found. Please run build process.</p>
     </body>
     </html>
   `);
